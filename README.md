@@ -1,4 +1,5 @@
 [![License (3-Clause BSD)](https://img.shields.io/badge/license-BSD%203--Clause-blue.svg?style=flat-square)](http://opensource.org/licenses/BSD-3-Clause)
+[![GitHub CI](https://github.com/ethauvin/dcat/actions/workflows/dart.yml/badge.svg)](https://github.com/ethauvin/dcat/actions/workflows/dart.yml)
 
 # dcat: Concatenate file(s) to standard output.
 
@@ -27,18 +28,18 @@ Examples:
   dcat f - g  Output f's contents, then standard input, then g's contents.
   dcat        Copy standard input to standard output.
   ```
- # Compile Application
+## Compile Application
   
-## Linux
+### Linux
 ```sh
 dart compile exe -o bin/dcat bin/dcat.dart
 ```
 
-## Windows
+### Windows
 ```cmd
 dart compile.exe bin/dcat.dart
 ```
 
-# Differences from GNU cat
+## Differences from GNU cat
   - No binary file support.
   - Line numbers are printed as `X:` where `X` is the line number.
