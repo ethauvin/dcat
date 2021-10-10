@@ -1,9 +1,9 @@
 [![License (3-Clause BSD)](https://img.shields.io/badge/license-BSD%203--Clause-blue.svg?style=flat-square)](http://opensource.org/licenses/BSD-3-Clause)
 [![GitHub CI](https://github.com/ethauvin/dcat/actions/workflows/dart.yml/badge.svg)](https://github.com/ethauvin/dcat/actions/workflows/dart.yml)
 
-# dcat: Concatenate file(s) to standard output.
+# dcat: Concatenate File(s) to Standard Output
 
-A **cat** command-line implemenation in [Dart](https://dart.dev/), loosely based on the [Write command-line apps sample code](https://dart.dev/tutorials/server/cmdline).
+A **cat** command-line implemenation in [Dart](https://dart.dev/), inspired by the [Write command-line apps sample code](https://dart.dev/tutorials/server/cmdline).
 
 ## Command-Line Usage
 
@@ -30,16 +30,16 @@ Examples:
   ```
 ## Compile Application
   
-### Linux
+### *nix
 ```sh
 dart compile exe -o bin/dcat bin/dcat.dart
 ```
 
 ### Windows
 ```cmd
-dart compile.exe bin/dcat.dart
+dart compile exe bin/dcat.dart
 ```
 
-## Differences from GNU cat
+## Differences from [GNU cat](https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html#cat-invocation)
   - No binary file support.
   - Line numbers are printed as `X:` where `X` is the line number.
