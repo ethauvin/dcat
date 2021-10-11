@@ -5,6 +5,10 @@
 
 A **cat** command-line implemenation in [Dart](https://dart.dev/), inspired by the [Write command-line apps sample code](https://dart.dev/tutorials/server/cmdline).
 
+## Synopsis
+
+**dcat** copies each file, or standard input if none are given, to standard output.
+
 ## Command-Line Usage
 
 ```sh
@@ -16,19 +20,23 @@ Concatenate FILE(s) to standard output.
 
 With no FILE, or when FILE is -, read standard input.
 
-  -b, --number-nonblank    number nonempty output lines, overrides -n
-  -E, --show-ends          display $ at end of each line
-  -h, --help               display this help and exit
-  -n, --number             number all output lines
-  -T, --show-tabs          display TAB characters as ^I
-  -s, --squeeze-blank      suppress repeated empty output lines
-      --version            output version information and exit
+  -A, --show-all                 equivalent to -vET
+  -b, --number-nonblank          number nonempty output lines, overrides -n
+  -e, --show-nonprinting-ends    equivalent to -vE
+  -E, --show-ends                display $ at end of each line
+  -h, --help                     display this help and exit
+  -n, --number                   number all output lines
+  -t, --show-nonprinting-tabs    equivalent to -vT
+  -T, --show-tabs                display TAB characters as ^I
+  -s, --squeeze-blank            suppress repeated empty output lines
+      --version                  output version information and exit
+  -v, --show-nonprinting         use ^ and M- notation, except for LFD and TAB
 
 Examples:
   dcat f - g  Output f's contents, then standard input, then g's contents.
   dcat        Copy standard input to standard output.
   ```
-## Compile Application
+## Compile Standalone Application
   
 ### *nix
 ```sh
@@ -42,4 +50,5 @@ dart compile exe bin/dcat.dart
 
 ## Differences from [GNU cat](https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html#cat-invocation)
   - No binary file support.
-  - Line numbers are printed as `X:` where `X` is the line number.
+  - A line is considered terminated by either a `CR` (carriage return), a `LF` (line feed), a `CR+LF` sequence (DOS line ending).
+  - The non-printing `M-^?` notation is always used for unicode characters.

@@ -54,7 +54,7 @@
 
 <span class="returntype"><a href="https://api.dart.dev/stable/2.14.3/dart-async/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.14.3/dart-core/int-class.html">int</a></span>&gt;</span></span>
 <span class="name ">printError</span>(<wbr><ol class="parameter-list"><li><span class="parameter" id="printError-param-message"><span class="type-annotation"><a href="https://api.dart.dev/stable/2.14.3/dart-core/String-class.html">String</a></span> <span class="parameter-name">message</span>, </span></li>
-<li><span class="parameter" id="printError-param-appName">{<span class="type-annotation"><a href="https://api.dart.dev/stable/2.14.3/dart-core/String-class.html">String</a></span> <span class="parameter-name">appName</span> = <span class="default-value">libName</span>, </span></li>
+<li><span class="parameter" id="printError-param-appName">{<span class="type-annotation"><a href="https://api.dart.dev/stable/2.14.3/dart-core/String-class.html">String</a></span> <span class="parameter-name">appName</span> = <span class="default-value">&#39;&#39;</span>, </span></li>
 <li><span class="parameter" id="printError-param-path"><span class="type-annotation"><a href="https://api.dart.dev/stable/2.14.3/dart-core/String-class.html">String</a></span> <span class="parameter-name">path</span> = <span class="default-value">&#39;&#39;</span>}</span></li>
 </ol>)
 
@@ -69,12 +69,14 @@
 <section class="summary source-code" id="source">
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">Future&lt;int&gt; printError(String message,
-    {String appName = libName, String path = &#39;&#39;}) async {
-  if (path.isNotEmpty) {
-    stderr.writeln(&#39;$libName: $path: $message&#39;);
-  } else {
-    stderr.write(&#39;$libName: $message&#39;);
+    {String appName = &#39;&#39;, String path = &#39;&#39;}) async {
+  if (appName.isNotEmpty) {
+    stderr.write(&#39;$appName: &#39;);
   }
+  if (path.isNotEmpty) {
+    stderr.write(&#39;$path: &#39;);
+  }
+  stderr.writeln(message);
   return exitFailure;
 }</code></pre>
 </section>
@@ -104,7 +106,6 @@
   <li class="section-title"><a href="../dcat/dcat-library.html#constants">Constants</a></li>
   <li><a href="../dcat/exitFailure-constant.html">exitFailure</a></li>
   <li><a href="../dcat/exitSuccess-constant.html">exitSuccess</a></li>
-  <li><a href="../dcat/libName-constant.html">libName</a></li>
 
 
   <li class="section-title"><a href="../dcat/dcat-library.html#functions">Functions</a></li>

@@ -48,6 +48,8 @@
 <a href="https://github.com/ethauvin/dcat/actions/workflows/dart.yml"><img src="https://github.com/ethauvin/dcat/actions/workflows/dart.yml/badge.svg" alt="GitHub CI"></a></p>
 <h1 id="dcat-concatenate-files-to-standard-output">dcat: Concatenate File(s) to Standard Output</h1>
 <p>A <strong>cat</strong> command-line implemenation in <a href="https://dart.dev/">Dart</a>, inspired by the <a href="https://dart.dev/tutorials/server/cmdline">Write command-line apps sample code</a>.</p>
+<h2 id="synopsis">Synopsis</h2>
+<p><strong>dcat</strong> copies each file, or standard input if none are given, to standard output.</p>
 <h2 id="command-line-usage">Command-Line Usage</h2>
 <pre class="language-sh"><code class="language-sh">dcat --help
 </code></pre>
@@ -56,19 +58,23 @@ Concatenate FILE(s) to standard output.
 
 With no FILE, or when FILE is -, read standard input.
 
-  -b, --number-nonblank    number nonempty output lines, overrides -n
-  -E, --show-ends          display $ at end of each line
-  -h, --help               display this help and exit
-  -n, --number             number all output lines
-  -T, --show-tabs          display TAB characters as ^I
-  -s, --squeeze-blank      suppress repeated empty output lines
-      --version            output version information and exit
+  -A, --show-all                 equivalent to -vET
+  -b, --number-nonblank          number nonempty output lines, overrides -n
+  -e, --show-nonprinting-ends    equivalent to -vE
+  -E, --show-ends                display $ at end of each line
+  -h, --help                     display this help and exit
+  -n, --number                   number all output lines
+  -t, --show-nonprinting-tabs    equivalent to -vT
+  -T, --show-tabs                display TAB characters as ^I
+  -s, --squeeze-blank            suppress repeated empty output lines
+      --version                  output version information and exit
+  -v, --show-nonprinting         use ^ and M- notation, except for LFD and TAB
 
 Examples:
   dcat f - g  Output f's contents, then standard input, then g's contents.
   dcat        Copy standard input to standard output.
 </code></pre>
-<h2 id="compile-application">Compile Application</h2>
+<h2 id="compile-standalone-application">Compile Standalone Application</h2>
 <h3 id="nix">*nix</h3>
 <pre class="language-sh"><code class="language-sh">dart compile exe -o bin/dcat bin/dcat.dart
 </code></pre>
@@ -78,7 +84,8 @@ Examples:
 <h2 id="differences-from-gnu-cathttpswwwgnuorgsoftwarecoreutilsmanualhtml_nodecat-invocationhtmlcat-invocation">Differences from <a href="https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html#cat-invocation">GNU cat</a></h2>
 <ul>
 <li>No binary file support.</li>
-<li>Line numbers are printed as <code>X:</code> where <code>X</code> is the line number.</li>
+<li>A line is considered terminated by either a <code>CR</code> (carriage return), a <code>LF</code> (line feed), a <code>CR+LF</code> sequence (DOS line ending).</li>
+<li>The non-printing <code>M-^?</code> notation is always used for unicode characters.</li>
 </ul>
 </section>
 
@@ -90,7 +97,7 @@ Examples:
   <span class="name"><a href="dcat/dcat-library.html">dcat</a></span> 
 
 </dt>
-<dd> 
+<dd>Library to concatenate file(s) to standard output, 
 </dd>
 
         </dl>
