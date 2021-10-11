@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dcat/dcat.dart';
 import 'package:test/test.dart';
 
@@ -21,8 +23,19 @@ void main() {
       expect(exitCode, equals(exitSuccess));
     });
 
+    test('Test -a', () async {
+      expect(app.main(['-a']), completion(equals(1)));
+      exitCode = await app.main(['-a']);
+      expect(exitCode, equals(exitFailure));
+    });
+
     test('Test directory', () async {
       exitCode = await app.main(['bin']);
+      expect(exitCode, equals(exitFailure));
+    });
+
+    test('Test binary', () async {
+      exitCode = await app.main(['test/test.7z']);
       expect(exitCode, equals(exitFailure));
     });
 
@@ -116,13 +129,13 @@ void main() {
     test('Test cat -A', () async {
       await cat(['test/test.txt'],
           log: log, showNonPrinting: true, showEnds: true, showTabs: true);
-      expect(log.last, equals('^I^A^B^C^DM-^?\$'));
+      expect(log.last, equals('^I^A^B^C^DM-)^?M-^@M-^?\$'));
     });
 
     test('Test cat -t', () async {
       await cat(['test/test.txt'],
           log: log, showNonPrinting: true, showTabs: true);
-      expect(log.last, equals('^I^A^B^C^DM-^?'));
+      expect(log.last, equals('^I^A^B^C^DM-)^?M-^@M-^?'));
     });
 
     test('Test cat-Abs', () async {
@@ -140,6 +153,19 @@ void main() {
         }
       }
       expect(blankLines, 2, reason: 'only 2 blank lines.');
+    });
+
+    test('Test cat -v', () async {
+      await cat(['test/test.txt'],
+          log: log, showNonPrinting: true);
+      var hasTab = false;
+      for (final String line in log) {
+        if (line.contains('\t')) {
+          hasTab = true;
+          break;
+        }
+      }
+      expect(hasTab, true, reason: "has real tab");
     });
   });
 }

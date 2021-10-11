@@ -51,6 +51,7 @@
 /**/.idea/**/workspace.xml
 /**/.idea/sonarlint*
 /**/.idea_modules/
+/coverage/
 Thumbs.db
 __pycache__
 atlassian-ide-plugin.xml

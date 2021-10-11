@@ -63,9 +63,10 @@ Future<int> main(List<String> arguments) async {
   try {
     argResults = parser.parse(arguments);
   } on FormatException catch (e) {
-    return await printError(
+    exitCode = await printError(
         "${e.message}\nTry '$appName --$helpFlag' for more information.",
         appName: appName);
+    return exitCode;
   }
 
   if (argResults[helpFlag]) {
