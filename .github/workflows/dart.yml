@@ -30,4 +30,4 @@ jobs:
         name: Publish coverage to Codecov
         with:
           fail_ci_if_error: true
-          verbose: true
+          verbose: false

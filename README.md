@@ -1,5 +1,6 @@
 [![License (3-Clause BSD)](https://img.shields.io/badge/license-BSD%203--Clause-blue.svg?style=flat-square)](http://opensource.org/licenses/BSD-3-Clause)
 [![GitHub CI](https://github.com/ethauvin/dcat/actions/workflows/dart.yml/badge.svg)](https://github.com/ethauvin/dcat/actions/workflows/dart.yml)
+[![codecov](https://codecov.io/gh/ethauvin/dcat/branch/master/graph/badge.svg?token=9PC4K4IZXJ)](https://codecov.io/gh/ethauvin/dcat)
 
 # dcat: Concatenate File(s) to Standard Output
 
