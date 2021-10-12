@@ -29,6 +29,5 @@ jobs:
       - uses: codecov/codecov-action@v2
         name: Publish coverage to Codecov
         with:
-          files: ${{env.working-directory}}/coverage/lcov.info
           fail_ci_if_error: true
           verbose: true
