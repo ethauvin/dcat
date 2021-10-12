@@ -1,4 +1,6 @@
-import 'dart:io';
+// Copyright (c) 2021, Erik C. Thauvin. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found
+// in the LICENSE file.
 
 import 'package:dcat/dcat.dart';
 import 'package:test/test.dart';
@@ -129,13 +131,13 @@ void main() {
     test('Test cat -A', () async {
       await cat(['test/test.txt'],
           log: log, showNonPrinting: true, showEnds: true, showTabs: true);
-      expect(log.last, equals('^I^A^B^C^DM-)^?M-^@M-^?\$'));
+      expect(log.last, equals('^I^A^B^C^DU+00A9^?U+0080U+2713\$'));
     });
 
     test('Test cat -t', () async {
       await cat(['test/test.txt'],
           log: log, showNonPrinting: true, showTabs: true);
-      expect(log.last, equals('^I^A^B^C^DM-)^?M-^@M-^?'));
+      expect(log.last, equals('^I^A^B^C^DU+00A9^?U+0080U+2713'));
     });
 
     test('Test cat-Abs', () async {
@@ -156,8 +158,7 @@ void main() {
     });
 
     test('Test cat -v', () async {
-      await cat(['test/test.txt'],
-          log: log, showNonPrinting: true);
+      await cat(['test/test.txt'], log: log, showNonPrinting: true);
       var hasTab = false;
       for (final String line in log) {
         if (line.contains('\t')) {
@@ -166,6 +167,8 @@ void main() {
         }
       }
       expect(hasTab, true, reason: "has real tab");
+      expect(log.last, equals('\t^A^B^C^DU+00A9^?U+0080U+2713'),
+          reason: 'non-printing');
     });
   });
 }

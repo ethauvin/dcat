@@ -47,7 +47,7 @@
   <p><a href="http://opensource.org/licenses/BSD-3-Clause"><img src="https://img.shields.io/badge/license-BSD%203--Clause-blue.svg?style=flat-square" alt="License (3-Clause BSD)"></a>
 <a href="https://github.com/ethauvin/dcat/actions/workflows/dart.yml"><img src="https://github.com/ethauvin/dcat/actions/workflows/dart.yml/badge.svg" alt="GitHub CI"></a></p>
 <h1 id="dcat-concatenate-files-to-standard-output">dcat: Concatenate File(s) to Standard Output</h1>
-<p>A <strong>cat</strong> command-line implemenation in <a href="https://dart.dev/">Dart</a>, inspired by the <a href="https://dart.dev/tutorials/server/cmdline">Write command-line apps sample code</a>.</p>
+<p>A <strong>cat</strong> command-line implementation in <a href="https://dart.dev/">Dart</a>, inspired by the <a href="https://dart.dev/tutorials/server/cmdline">Write command-line apps sample code</a>.</p>
 <h2 id="synopsis">Synopsis</h2>
 <p><strong>dcat</strong> copies each file, or standard input if none are given, to standard output.</p>
 <h2 id="command-line-usage">Command-Line Usage</h2>
@@ -68,7 +68,7 @@ With no FILE, or when FILE is -, read standard input.
   -T, --show-tabs                display TAB characters as ^I
   -s, --squeeze-blank            suppress repeated empty output lines
       --version                  output version information and exit
-  -v, --show-nonprinting         use ^ and M- notation, except for LFD and TAB
+  -v, --show-nonprinting         use ^ and U+ notation, except for LFD and TAB
 
 Examples:
   dcat f - g  Output f's contents, then standard input, then g's contents.
@@ -85,7 +85,8 @@ Examples:
 <ul>
 <li>No binary file support.</li>
 <li>A line is considered terminated by either a <code>CR</code> (carriage return), a <code>LF</code> (line feed), a <code>CR+LF</code> sequence (DOS line ending).</li>
-<li>The non-printing <code>M-^?</code> notation is always used for unicode characters.</li>
+<li>A line ending is automatically appended to the last line of any read file.</li>
+<li>The <code>U+</code> notation is used instead of <code>M-</code> for non-printing characters.</li>
 </ul>
 </section>
 

@@ -3,7 +3,7 @@
 
 # dcat: Concatenate File(s) to Standard Output
 
-A **cat** command-line implemenation in [Dart](https://dart.dev/), inspired by the [Write command-line apps sample code](https://dart.dev/tutorials/server/cmdline).
+A **cat** command-line implementation in [Dart](https://dart.dev/), inspired by the [Write command-line apps sample code](https://dart.dev/tutorials/server/cmdline).
 
 ## Synopsis
 
@@ -30,7 +30,7 @@ With no FILE, or when FILE is -, read standard input.
   -T, --show-tabs                display TAB characters as ^I
   -s, --squeeze-blank            suppress repeated empty output lines
       --version                  output version information and exit
-  -v, --show-nonprinting         use ^ and M- notation, except for LFD and TAB
+  -v, --show-nonprinting         use ^ and U+ notation, except for LFD and TAB
 
 Examples:
   dcat f - g  Output f's contents, then standard input, then g's contents.
@@ -51,4 +51,5 @@ dart compile exe bin/dcat.dart
 ## Differences from [GNU cat](https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html#cat-invocation)
   - No binary file support.
   - A line is considered terminated by either a `CR` (carriage return), a `LF` (line feed), a `CR+LF` sequence (DOS line ending).
-  - The non-printing `M-^?` notation is always used for unicode characters.
+  - A line ending is automatically appended to the last line of any read file.
+  - The `U+` notation is used instead of `M-` for non-printing characters.

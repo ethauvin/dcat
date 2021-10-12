@@ -57,7 +57,7 @@ Future<int> main(List<String> arguments) async {
   parser.addFlag(showNonPrintingFlag,
       negatable: false,
       abbr: 'v',
-      help: 'use ^ and M- notation, except for LFD and TAB');
+      help: 'use ^ and U+ notation, except for LFD and TAB');
 
   final ArgResults argResults;
   try {

@@ -83,18 +83,7 @@ Future<String> _parseNonPrinting(String line, bool showTabs) async {
       } else if (ch == 127) {
         sb.write('^?');
       } else {
-        sb.write('M-');
-        if (ch >= 128 + 32) {
-          if (ch < 128 + 127) {
-            sb.writeCharCode(ch - 128);
-          } else {
-            sb.write('^?');
-          }
-        } else {
-          sb
-            ..write('^')
-            ..writeCharCode(ch - 128 + 64);
-        }
+          sb.write('U+' +  ch.toRadixString(16).padLeft(4, '0').toUpperCase());
       }
     } else if (ch == 9 && !showTabs) {
       sb.write('\t');
