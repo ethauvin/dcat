@@ -45,11 +45,12 @@
       
 <section class="desc markdown">
   <p><a href="http://opensource.org/licenses/BSD-3-Clause"><img src="https://img.shields.io/badge/license-BSD%203--Clause-blue.svg?style=flat-square" alt="License (3-Clause BSD)"></a>
-<a href="https://github.com/ethauvin/dcat/actions/workflows/dart.yml"><img src="https://github.com/ethauvin/dcat/actions/workflows/dart.yml/badge.svg" alt="GitHub CI"></a></p>
-<h1 id="dcat-concatenate-files-to-standard-output">dcat: Concatenate File(s) to Standard Output</h1>
-<p>A <strong>cat</strong> command-line implementation in <a href="https://dart.dev/">Dart</a>, inspired by the <a href="https://dart.dev/tutorials/server/cmdline">Write command-line apps sample code</a>.</p>
+<a href="https://github.com/ethauvin/dcat/actions/workflows/dart.yml"><img src="https://github.com/ethauvin/dcat/actions/workflows/dart.yml/badge.svg" alt="GitHub CI"></a>
+<a href="https://codecov.io/gh/ethauvin/dcat"><img src="https://codecov.io/gh/ethauvin/dcat/branch/master/graph/badge.svg?token=9PC4K4IZXJ" alt="codecov"></a></p>
+<h1 id="dcat-concatenate-files-to-standard-output-or-file">dcat: Concatenate File(s) to Standard Output or File</h1>
+<p>A <strong>cat</strong> command-line and library implementation in <a href="https://dart.dev/">Dart</a>, inspired by the <a href="https://dart.dev/tutorials/server/cmdline">Write command-line apps sample code</a>.</p>
 <h2 id="synopsis">Synopsis</h2>
-<p><strong>dcat</strong> copies each file, or standard input if none are given, to standard output.</p>
+<p><strong>dcat</strong> copies each file, or standard input if none are given, to standard output or file.</p>
 <h2 id="command-line-usage">Command-Line Usage</h2>
 <pre class="language-sh"><code class="language-sh">dcat --help
 </code></pre>
@@ -81,6 +82,31 @@ Examples:
 <h3 id="windows">Windows</h3>
 <pre class="language-cmd"><code class="language-cmd">dart compile exe bin/dcat.dart
 </code></pre>
+<h2 id="library-usage">Library Usage</h2>
+<pre class="language-dart"><code class="language-dart">import 'package:dcat/dcat.dart';
+
+final result = await cat(['path/to/file', 'path/to/otherfile]'], File('path/to/outfile'));
+if (result.exitCode == exitFailure) {
+  for (final message in result.messages) {
+    print("Error: $message");
+  }
+}
+</code></pre>
+<p>The <code>cat</code> function supports the following parameters:</p>
+<table><thead><tr><th style="text-align: left;">Parameter</th><th style="text-align: left;">Description</th><th style="text-align: left;">Type</th></tr></thead><tbody><tr><td style="text-align: left;">paths</td><td style="text-align: left;">The file paths.</td><td style="text-align: left;">String[]</td></tr><tr><td style="text-align: left;">output</td><td style="text-align: left;">The standard output or file.</td><td style="text-align: left;">IOSink or File</td></tr><tr><td style="text-align: left;">input</td><td style="text-align: left;">The standard input.</td><td style="text-align: left;">Stream&lt;List&lt;int&gt;&gt;?</td></tr><tr><td style="text-align: left;">log</td><td style="text-align: left;">The log for debugging.</td><td style="text-align: left;">List&lt;String&gt;?</td></tr><tr><td style="text-align: left;">showEnds</td><td style="text-align: left;">Same as <code>-e</code></td><td style="text-align: left;">bool</td></tr><tr><td style="text-align: left;">numberNonBlank</td><td style="text-align: left;">Same as <code>-b</code></td><td style="text-align: left;">bool</td></tr><tr><td style="text-align: left;">showLineNumbers</td><td style="text-align: left;">Same as <code>-n</code></td><td style="text-align: left;">bool</td></tr><tr><td style="text-align: left;">showTabs</td><td style="text-align: left;">Same as <code>-T</code></td><td style="text-align: left;">bool</td></tr><tr><td style="text-align: left;">squeezeBlank</td><td style="text-align: left;">Same as <code>-s</code></td><td style="text-align: left;">bool</td></tr><tr><td style="text-align: left;">showNonPrinting</td><td style="text-align: left;">Same as <code>-v</code></td><td style="text-align: left;">bool</td></tr></tbody></table>
+<ul>
+<li><code>paths</code> and <code>output</code> are required.</li>
+<li><code>output</code> should be an <code>IOSink</code> like <code>stdout</code> or a <code>File</code>.</li>
+<li><code>input</code> can be <code>stdin</code>.</li>
+<li><code>log</code> is used for debugging/testing purposes.</li>
+</ul>
+<p>The remaining optional parameters are similar to the <a href="https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html#cat-invocation">GNU cat</a> utility.</p>
+<p>A <code>CatResult</code> object is returned which contains the <code>exitCode</code> (<code>exitSuccess</code> or <code>exitFailure</code>) and error <code>messages</code> if any:</p>
+<pre class="language-dart"><code class="language-dart">final result = await cat(['path/to/file'], stdout);
+if (result.exitCode == exitSuccess) {
+  ...
+}
+</code></pre>
 <h2 id="differences-from-gnu-cathttpswwwgnuorgsoftwarecoreutilsmanualhtml_nodecat-invocationhtmlcat-invocation">Differences from <a href="https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html#cat-invocation">GNU cat</a></h2>
 <ul>
 <li>No binary file support.</li>
@@ -98,7 +124,7 @@ Examples:
   <span class="name"><a href="dcat/dcat-library.html">dcat</a></span> 
 
 </dt>
-<dd>Library to concatenate file(s) to standard output, 
+<dd>A library to concatenate files to standard output or file. 
 </dd>
 
         </dl>

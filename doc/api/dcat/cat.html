@@ -52,9 +52,10 @@
     <section class="multi-line-signature">
         
 
-<span class="returntype"><a href="https://api.dart.dev/stable/2.14.3/dart-async/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.14.3/dart-core/int-class.html">int</a></span>&gt;</span></span>
+<span class="returntype"><a href="https://api.dart.dev/stable/2.14.3/dart-async/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../dcat/CatResult-class.html">CatResult</a></span>&gt;</span></span>
 <span class="name ">cat</span>(<wbr><ol class="parameter-list"><li><span class="parameter" id="cat-param-paths"><span class="type-annotation"><a href="https://api.dart.dev/stable/2.14.3/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.14.3/dart-core/String-class.html">String</a></span>&gt;</span></span> <span class="parameter-name">paths</span>, </span></li>
-<li><span class="parameter" id="cat-param-appName">{<span class="type-annotation"><a href="https://api.dart.dev/stable/2.14.3/dart-core/String-class.html">String</a></span> <span class="parameter-name">appName</span> = <span class="default-value">&#39;&#39;</span>, </span></li>
+<li><span class="parameter" id="cat-param-output"><span class="type-annotation"><a href="https://api.dart.dev/stable/2.14.3/dart-core/Object-class.html">Object</a></span> <span class="parameter-name">output</span>, </span></li>
+<li><span class="parameter" id="cat-param-input">{<span class="type-annotation"><a href="https://api.dart.dev/stable/2.14.3/dart-async/Stream-class.html">Stream</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.14.3/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.14.3/dart-core/int-class.html">int</a></span>&gt;</span></span>&gt;</span>?</span> <span class="parameter-name">input</span>, </span></li>
 <li><span class="parameter" id="cat-param-log"><span class="type-annotation"><a href="https://api.dart.dev/stable/2.14.3/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.14.3/dart-core/String-class.html">String</a></span>&gt;</span>?</span> <span class="parameter-name">log</span>, </span></li>
 <li><span class="parameter" id="cat-param-showEnds"><span class="type-annotation"><a href="https://api.dart.dev/stable/2.14.3/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">showEnds</span> = <span class="default-value">false</span>, </span></li>
 <li><span class="parameter" id="cat-param-numberNonBlank"><span class="type-annotation"><a href="https://api.dart.dev/stable/2.14.3/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">numberNonBlank</span> = <span class="default-value">false</span>, </span></li>
@@ -67,17 +68,21 @@
     </section>
     
 <section class="desc markdown">
-  <p>Concatenates files in <code>paths</code> to <a href="https://api.dart.dev/stable/2.14.3/dart-io/stdout.html">stdout</a></p>
-<p>The parameters are similar to the <a href="https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html#cat-invocation">GNU cat utility</a>.
-Specify a <code>log</code> for debugging or testing purpose.</p>
+  <p>Concatenates files in <code>paths</code> to <a href="https://api.dart.dev/stable/2.14.3/dart-io/stdout.html">stdout</a> or <a href="https://api.dart.dev/stable/2.14.3/dart-io/File-class.html">File</a>.</p>
+<ul>
+<li><code>output</code> should be an <a href="https://api.dart.dev/stable/2.14.3/dart-io/IOSink-class.html">IOSink</a> like <a href="https://api.dart.dev/stable/2.14.3/dart-io/stdout.html">stdout</a> or a <a href="https://api.dart.dev/stable/2.14.3/dart-io/File-class.html">File</a>.</li>
+<li><code>input</code> can be <a href="https://api.dart.dev/stable/2.14.3/dart-io/stdin.html">stdin</a>.</li>
+<li><code>log</code> is used for debugging/testing purposes.</li>
+</ul>
+<p>The remaining optional parameters are similar to the <a href="https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html#cat-invocation">GNU cat utility</a>.</p>
 </section>
 
 
     
 <section class="summary source-code" id="source">
   <h2><span>Implementation</span></h2>
-  <pre class="language-dart"><code class="language-dart">Future&lt;int&gt; cat(List&lt;String&gt; paths,
-    {String appName = &#39;&#39;,
+  <pre class="language-dart"><code class="language-dart">Future&lt;CatResult&gt; cat(List&lt;String&gt; paths, Object output,
+    {Stream&lt;List&lt;int&gt;&gt;? input,
     List&lt;String&gt;? log,
     bool showEnds = false,
     bool numberNonBlank = false,
@@ -85,19 +90,34 @@ Specify a <code>log</code> for debugging or testing purpose.</p>
     bool showTabs = false,
     bool squeezeBlank = false,
     bool showNonPrinting = false}) async {
+  var result = CatResult();
   var lineNumber = 1;
-  var returnCode = 0;
   log?.clear();
   if (paths.isEmpty) {
-    final lines = await _readStdin();
-    await _writeLines(lines, lineNumber, log, showEnds, showLineNumbers,
-        numberNonBlank, showTabs, squeezeBlank, showNonPrinting);
+    if (input != null) {
+      final lines = await _readStream(input);
+      try {
+        await _writeLines(
+            lines,
+            lineNumber,
+            output,
+            log,
+            showEnds,
+            showLineNumbers,
+            numberNonBlank,
+            showTabs,
+            squeezeBlank,
+            showNonPrinting);
+      } catch (e) {
+        result.addMessage(exitFailure, &#39;$e&#39;);
+      }
+    }
   } else {
     for (final path in paths) {
       try {
         final Stream&lt;String&gt; lines;
-        if (path == &#39;-&#39;) {
-          lines = await _readStdin();
+        if (path == &#39;-&#39; &amp;&amp; input != null) {
+          lines = await _readStream(input);
         } else {
           lines = utf8.decoder
               .bind(File(path).openRead())
@@ -106,6 +126,7 @@ Specify a <code>log</code> for debugging or testing purpose.</p>
         lineNumber = await _writeLines(
             lines,
             lineNumber,
+            output,
             log,
             showEnds,
             showLineNumbers,
@@ -121,17 +142,16 @@ Specify a <code>log</code> for debugging or testing purpose.</p>
         } else {
           message = e.message;
         }
-        returnCode = await printError(message, appName: appName, path: path);
+        result.addMessage(exitFailure, message, path: path);
       } on FormatException {
-        returnCode = await printError(&#39;Binary file not supported.&#39;,
-            appName: appName, path: path);
+        result.addMessage(exitFailure, &#39;Binary file not supported.&#39;,
+            path: path);
       } catch (e) {
-        returnCode =
-            await printError(e.toString(), appName: appName, path: path);
+        result.addMessage(exitFailure, &#39;$e&#39;, path: path);
       }
     }
   }
-  return returnCode;
+  return result;
 }</code></pre>
 </section>
 
@@ -154,6 +174,8 @@ Specify a <code>log</code> for debugging or testing purpose.</p>
 
     <h5>dcat library</h5>
     <ol>
+  <li class="section-title"><a href="../dcat/dcat-library.html#classes">Classes</a></li>
+  <li><a href="../dcat/CatResult-class.html">CatResult</a></li>
 
 
 
@@ -164,7 +186,6 @@ Specify a <code>log</code> for debugging or testing purpose.</p>
 
   <li class="section-title"><a href="../dcat/dcat-library.html#functions">Functions</a></li>
   <li><a href="../dcat/cat.html">cat</a></li>
-  <li><a href="../dcat/printError.html">printError</a></li>
 
 
 

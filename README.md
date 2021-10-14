@@ -2,13 +2,13 @@
 [![GitHub CI](https://github.com/ethauvin/dcat/actions/workflows/dart.yml/badge.svg)](https://github.com/ethauvin/dcat/actions/workflows/dart.yml)
 [![codecov](https://codecov.io/gh/ethauvin/dcat/branch/master/graph/badge.svg?token=9PC4K4IZXJ)](https://codecov.io/gh/ethauvin/dcat)
 
-# dcat: Concatenate File(s) to Standard Output
+# dcat: Concatenate File(s) to Standard Output or File
 
-A **cat** command-line implementation in [Dart](https://dart.dev/), inspired by the [Write command-line apps sample code](https://dart.dev/tutorials/server/cmdline).
+A **cat** command-line and library implementation in [Dart](https://dart.dev/), inspired by the [Write command-line apps sample code](https://dart.dev/tutorials/server/cmdline).
 
 ## Synopsis
 
-**dcat** copies each file, or standard input if none are given, to standard output.
+**dcat** copies each file, or standard input if none are given, to standard output or file.
 
 ## Command-Line Usage
 
@@ -47,6 +47,49 @@ dart compile exe -o bin/dcat bin/dcat.dart
 ### Windows
 ```cmd
 dart compile exe bin/dcat.dart
+```
+
+## Library Usage
+```dart
+import 'package:dcat/dcat.dart';
+
+final result = await cat(['path/to/file', 'path/to/otherfile]'], File('path/to/outfile'));
+if (result.exitCode == exitFailure) {
+  for (final message in result.messages) {
+    print("Error: $message");
+  }
+}
+```
+
+The `cat` function supports the following parameters:
+
+Parameter        | Description                   |  Type    
+:--------------- |:----------------------------- | :-------------------
+paths            | The file paths.               | String[]
+output           | The standard output or file.  | IOSink or File
+input            | The standard input.           | Stream<List\<int\>\>?
+log              | The log for debugging.        | List\<String\>?
+showEnds         | Same as `-e`                  | bool
+numberNonBlank   | Same as `-b`                  | bool
+showLineNumbers  | Same as `-n`                  | bool
+showTabs         | Same as `-T`                  | bool
+squeezeBlank     | Same as `-s`                  | bool
+showNonPrinting  | Same as `-v`                  | bool
+
+* `paths` and `output` are required.
+* `output` should be an `IOSink` like `stdout` or a `File`.
+* `input` can be `stdin`.
+* `log` is used for debugging/testing purposes.
+
+The remaining optional parameters are similar to the [GNU cat](https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html#cat-invocation) utility.
+
+A `CatResult` object is returned which contains the `exitCode` (`exitSuccess` or `exitFailure`) and error `messages` if any:
+
+```dart
+final result = await cat(['path/to/file'], stdout);
+if (result.exitCode == exitSuccess) {
+  ...
+}
 ```
 
 ## Differences from [GNU cat](https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html#cat-invocation)

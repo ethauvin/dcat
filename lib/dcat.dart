@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be found
 // in the LICENSE file.
 
-/// Library to concatenate file(s) to standard output,
+/// A library to concatenate files to standard output or file.
 library dcat;
 
 import 'dart:convert';
@@ -11,12 +11,35 @@ import 'dart:io';
 const exitFailure = 1;
 const exitSuccess = 0;
 
-/// Concatenates files in [paths] to [stdout]
+/// Holds the [cat] result [exitCode] and error [messages].
+class CatResult {
+  /// The exit code.
+  int exitCode = exitSuccess;
+  /// The error messages.
+  final List<String> messages = [];
+
+  CatResult();
+
+  /// Add a message.
+  void addMessage(int exitCode, String message, {String? path}) {
+    this.exitCode = exitCode;
+    if (path != null && path.isNotEmpty) {
+      messages.add('$path: $message');
+    } else {
+      messages.add(message);
+    }
+  }
+}
+
+/// Concatenates files in [paths] to [stdout] or [File].
 ///
-/// The parameters are similar to the [GNU cat utility](https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html#cat-invocation).
-/// Specify a [log] for debugging or testing purpose.
-Future<int> cat(List<String> paths,
-    {String appName = '',
+///  * [output] should be an [IOSink] like [stdout] or a [File].
+///  * [input] can be [stdin].
+///  * [log] is used for debugging/testing purposes.
+///
+/// The remaining optional parameters are similar to the [GNU cat utility](https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html#cat-invocation).
+Future<CatResult> cat(List<String> paths, Object output,
+    {Stream<List<int>>? input,
     List<String>? log,
     bool showEnds = false,
     bool numberNonBlank = false,
@@ -24,19 +47,34 @@ Future<int> cat(List<String> paths,
     bool showTabs = false,
     bool squeezeBlank = false,
     bool showNonPrinting = false}) async {
+  var result = CatResult();
   var lineNumber = 1;
-  var returnCode = 0;
   log?.clear();
   if (paths.isEmpty) {
-    final lines = await _readStdin();
-    await _writeLines(lines, lineNumber, log, showEnds, showLineNumbers,
-        numberNonBlank, showTabs, squeezeBlank, showNonPrinting);
+    if (input != null) {
+      final lines = await _readStream(input);
+      try {
+        await _writeLines(
+            lines,
+            lineNumber,
+            output,
+            log,
+            showEnds,
+            showLineNumbers,
+            numberNonBlank,
+            showTabs,
+            squeezeBlank,
+            showNonPrinting);
+      } catch (e) {
+        result.addMessage(exitFailure, '$e');
+      }
+    }
   } else {
     for (final path in paths) {
       try {
         final Stream<String> lines;
-        if (path == '-') {
-          lines = await _readStdin();
+        if (path == '-' && input != null) {
+          lines = await _readStream(input);
         } else {
           lines = utf8.decoder
               .bind(File(path).openRead())
@@ -45,6 +83,7 @@ Future<int> cat(List<String> paths,
         lineNumber = await _writeLines(
             lines,
             lineNumber,
+            output,
             log,
             showEnds,
             showLineNumbers,
@@ -60,17 +99,16 @@ Future<int> cat(List<String> paths,
         } else {
           message = e.message;
         }
-        returnCode = await printError(message, appName: appName, path: path);
+        result.addMessage(exitFailure, message, path: path);
       } on FormatException {
-        returnCode = await printError('Binary file not supported.',
-            appName: appName, path: path);
+        result.addMessage(exitFailure, 'Binary file not supported.',
+            path: path);
       } catch (e) {
-        returnCode =
-            await printError(e.toString(), appName: appName, path: path);
+        result.addMessage(exitFailure, '$e', path: path);
       }
     }
   }
-  return returnCode;
+  return result;
 }
 
 /// Parses line with non-printing characters.
@@ -83,7 +121,7 @@ Future<String> _parseNonPrinting(String line, bool showTabs) async {
       } else if (ch == 127) {
         sb.write('^?');
       } else {
-          sb.write('U+' +  ch.toRadixString(16).padLeft(4, '0').toUpperCase());
+        sb.write('U+' + ch.toRadixString(16).padLeft(4, '0').toUpperCase());
       }
     } else if (ch == 9 && !showTabs) {
       sb.write('\t');
@@ -96,25 +134,12 @@ Future<String> _parseNonPrinting(String line, bool showTabs) async {
   return sb.toString();
 }
 
-/// Prints the [appName], [path] and error [message] to [stderr].
-Future<int> printError(String message,
-    {String appName = '', String path = ''}) async {
-  if (appName.isNotEmpty) {
-    stderr.write('$appName: ');
-  }
-  if (path.isNotEmpty) {
-    stderr.write('$path: ');
-  }
-  stderr.writeln(message);
-  return exitFailure;
-}
-
-/// Reads from stdin.
-Future<Stream<String>> _readStdin() async =>
-    stdin.transform(utf8.decoder).transform(const LineSplitter());
+/// Reads from stream (stdin, etc.)
+Future<Stream<String>> _readStream(Stream<List<int>> input) async =>
+    input.transform(utf8.decoder).transform(const LineSplitter());
 
 /// Writes lines to stdout.
-Future<int> _writeLines(Stream<String> lines, int lineNumber,
+Future<int> _writeLines(Stream<String> lines, int lineNumber, Object out,
     [List<String>? log,
     bool showEnds = false,
     bool showLineNumbers = false,
@@ -150,7 +175,16 @@ Future<int> _writeLines(Stream<String> lines, int lineNumber,
     }
 
     log?.add(sb.toString());
-    stdout.writeln(sb);
+
+    try {
+      if (out is IOSink) {
+        out.writeln(sb);
+      } else if (out is File) {
+        await out.writeAsString("$sb\n", mode: FileMode.append);
+      }
+    } catch (e) {
+      rethrow;
+    }
   }
   return lineNumber;
 }

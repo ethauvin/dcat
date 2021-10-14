@@ -1,5 +1,5 @@
 name: dcat
-description: Concatenate file(s) to standard output.
+description: Concatenate file(s) to standard output or file
 version: 1.0.0
 homepage: https://github.com/ethauvin/dcat
 

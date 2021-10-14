@@ -27,8 +27,9 @@ const versionFlag = 'version';
 /// Usage: `dcat [option] [file]…`
 Future<int> main(List<String> arguments) async {
   final parser = ArgParser();
-  Future<int> returnCode;
+
   exitCode = exitSuccess;
+
   parser.addFlag(showAllFlag,
       negatable: false, abbr: 'A', help: 'equivalent to -vET');
   parser.addFlag(nonBlankFlag,
@@ -63,16 +64,14 @@ Future<int> main(List<String> arguments) async {
   try {
     argResults = parser.parse(arguments);
   } on FormatException catch (e) {
-    exitCode = await printError(
-        "${e.message}\nTry '$appName --$helpFlag' for more information.",
-        appName: appName);
-    return exitCode;
+    return printError(
+        "${e.message}\nTry '$appName --$helpFlag' for more information.");
   }
 
   if (argResults[helpFlag]) {
-    returnCode = usage(parser.usage);
+    exitCode = await usage(parser.usage);
   } else if (argResults[versionFlag]) {
-    returnCode = printVersion();
+    exitCode = await printVersion();
   } else {
     final paths = argResults.rest;
     var showEnds = argResults[showEndsFlag];
@@ -91,18 +90,29 @@ Future<int> main(List<String> arguments) async {
       showNonPrinting = showEnds = showTabs = true;
     }
 
-    returnCode = cat(paths,
-        appName: appName,
+    final result = await cat(paths, stdout,
+        input: stdin,
         showEnds: showEnds,
         showLineNumbers: argResults[numberFlag],
         numberNonBlank: argResults[nonBlankFlag],
         showTabs: showTabs,
         squeezeBlank: argResults[squeezeBlank],
         showNonPrinting: showNonPrinting);
+
+    for (final message in result.messages) {
+      await printError(message);
+    }
+
+    exitCode = result.exitCode;
   }
 
-  exitCode = await returnCode;
   return exitCode;
+}
+
+/// Prints the error [message] to [stderr].
+Future<int> printError(String message) async {
+  stderr.writeln("$appName: $message");
+  return exitFailure;
 }
 
 /// Prints the version info.
