@@ -51,7 +51,6 @@
 /**/.idea/**/workspace.xml
 /**/.idea/sonarlint*
 /**/.idea_modules/
-/coverage/
 Thumbs.db
 __pycache__
 atlassian-ide-plugin.xml
@@ -60,6 +59,7 @@ bin/dcat.exe
 build/
 cmake-build-*/
 com_crashlytics_export_strings.xml
+coverage/
 crashlytics-build.properties
 crashlytics.properties
 dependency-reduced-pom.xml

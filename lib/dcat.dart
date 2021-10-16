@@ -8,19 +8,31 @@ library dcat;
 import 'dart:convert';
 import 'dart:io';
 
+/// Failure exit code.
 const exitFailure = 1;
+
+/// Success exit code.
 const exitSuccess = 0;
+
+const _lineFeed = 10;
 
 /// Holds the [cat] result [exitCode] and error [messages].
 class CatResult {
   /// The exit code.
   int exitCode = exitSuccess;
+
   /// The error messages.
   final List<String> messages = [];
 
   CatResult();
 
-  /// Add a message.
+  /// Returns `true` if the [exitCode] is [exitFailure].
+  bool get isFailure => exitCode == exitFailure;
+
+  /// Returns `true` if the [exitCode] is [exitSuccess].
+  bool get isSuccess => exitCode == exitSuccess;
+
+  /// Add a message with an optional path.
   void addMessage(int exitCode, String message, {String? path}) {
     this.exitCode = exitCode;
     if (path != null && path.isNotEmpty) {
@@ -31,40 +43,35 @@ class CatResult {
   }
 }
 
-/// Concatenates files in [paths] to [stdout] or [File].
+// Holds the current line number and last character.
+class _LastLine {
+  int lineNumber;
+  int lastChar;
+
+  _LastLine(this.lineNumber, this.lastChar);
+}
+
+/// Concatenates files in [paths] to the standard output or a file.
 ///
-///  * [output] should be an [IOSink] like [stdout] or a [File].
+///  * [output] should be an [IOSink] such as [stdout] or [File.openWrite].
 ///  * [input] can be [stdin].
-///  * [log] is used for debugging/testing purposes.
 ///
 /// The remaining optional parameters are similar to the [GNU cat utility](https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html#cat-invocation).
-Future<CatResult> cat(List<String> paths, Object output,
+Future<CatResult> cat(List<String> paths, IOSink output,
     {Stream<List<int>>? input,
-    List<String>? log,
     bool showEnds = false,
     bool numberNonBlank = false,
     bool showLineNumbers = false,
     bool showTabs = false,
     bool squeezeBlank = false,
     bool showNonPrinting = false}) async {
-  var result = CatResult();
-  var lineNumber = 1;
-  log?.clear();
+  final result = CatResult();
+  final lastLine = _LastLine(0, _lineFeed);
   if (paths.isEmpty) {
     if (input != null) {
-      final lines = await _readStream(input);
       try {
-        await _writeLines(
-            lines,
-            lineNumber,
-            output,
-            log,
-            showEnds,
-            showLineNumbers,
-            numberNonBlank,
-            showTabs,
-            squeezeBlank,
-            showNonPrinting);
+        await _writeStream(input, lastLine, output, showEnds, showLineNumbers,
+            numberNonBlank, showTabs, squeezeBlank, showNonPrinting);
       } catch (e) {
         result.addMessage(exitFailure, '$e');
       }
@@ -72,25 +79,14 @@ Future<CatResult> cat(List<String> paths, Object output,
   } else {
     for (final path in paths) {
       try {
-        final Stream<String> lines;
+        final Stream<List<int>> stream;
         if (path == '-' && input != null) {
-          lines = await _readStream(input);
+          stream = input;
         } else {
-          lines = utf8.decoder
-              .bind(File(path).openRead())
-              .transform(const LineSplitter());
+          stream = File(path).openRead();
         }
-        lineNumber = await _writeLines(
-            lines,
-            lineNumber,
-            output,
-            log,
-            showEnds,
-            showLineNumbers,
-            numberNonBlank,
-            showTabs,
-            squeezeBlank,
-            showNonPrinting);
+        await _writeStream(stream, lastLine, output, showEnds, showLineNumbers,
+            numberNonBlank, showTabs, squeezeBlank, showNonPrinting);
       } on FileSystemException catch (e) {
         final String? osMessage = e.osError?.message;
         final String message;
@@ -111,80 +107,77 @@ Future<CatResult> cat(List<String> paths, Object output,
   return result;
 }
 
-/// Parses line with non-printing characters.
-Future<String> _parseNonPrinting(String line, bool showTabs) async {
+// Writes parsed data from a stream
+Future<void> _writeStream(
+    Stream stream,
+    _LastLine lastLine,
+    IOSink out,
+    bool showEnds,
+    bool showLineNumbers,
+    bool numberNonBlank,
+    bool showTabs,
+    bool squeezeBlank,
+    bool showNonPrinting) async {
+  const tab = 9;
+  int squeeze = 0;
   final sb = StringBuffer();
-  for (var ch in line.runes) {
-    if (ch >= 32) {
-      if (ch < 127) {
-        sb.writeCharCode(ch);
-      } else if (ch == 127) {
-        sb.write('^?');
-      } else {
-        sb.write('U+' + ch.toRadixString(16).padLeft(4, '0').toUpperCase());
-      }
-    } else if (ch == 9 && !showTabs) {
-      sb.write('\t');
-    } else {
-      sb
-        ..write('^')
-        ..writeCharCode(ch + 64);
-    }
-  }
-  return sb.toString();
-}
-
-/// Reads from stream (stdin, etc.)
-Future<Stream<String>> _readStream(Stream<List<int>> input) async =>
-    input.transform(utf8.decoder).transform(const LineSplitter());
-
-/// Writes lines to stdout.
-Future<int> _writeLines(Stream<String> lines, int lineNumber, Object out,
-    [List<String>? log,
-    bool showEnds = false,
-    bool showLineNumbers = false,
-    bool showNonBlank = false,
-    bool showTabs = false,
-    bool squeezeBlank = false,
-    bool showNonPrinting = false]) async {
-  var emptyLine = 0;
-  final sb = StringBuffer();
-  await for (final line in lines) {
+  await stream.forEach((data) {
     sb.clear();
-    if (squeezeBlank && line.isEmpty) {
-      if (++emptyLine >= 2) {
-        continue;
+    for (final ch in utf8.decode(data).runes) {
+      if (lastLine.lastChar == _lineFeed) {
+        if (squeezeBlank) {
+          if (ch == _lineFeed) {
+            if (squeeze >= 1) {
+              lastLine.lastChar = ch;
+              continue;
+            }
+            squeeze++;
+          } else {
+            squeeze = 0;
+          }
+        }
+        if (showLineNumbers || numberNonBlank) {
+          if (!numberNonBlank || ch != _lineFeed) {
+            sb.write('${++lastLine.lineNumber}'.padLeft(6) + '\t');
+          }
+        }
       }
-    } else {
-      emptyLine = 0;
-    }
-    if (showLineNumbers || (showNonBlank && line.isNotEmpty)) {
-      sb.write('${lineNumber++}  '.padLeft(8));
-    }
-
-    if (showNonPrinting) {
-      sb.write(await _parseNonPrinting(line, showTabs));
-    } else if (showTabs) {
-      sb.write(line.replaceAll('\t', '^I'));
-    } else {
-      sb.write(line);
-    }
-
-    if (showEnds) {
-      sb.write('\$');
-    }
-
-    log?.add(sb.toString());
-
-    try {
-      if (out is IOSink) {
-        out.writeln(sb);
-      } else if (out is File) {
-        await out.writeAsString("$sb\n", mode: FileMode.append);
+      lastLine.lastChar = ch;
+      if (ch == _lineFeed) {
+        if (showEnds) {
+          sb.write('\$');
+        }
+      } else if (ch == tab) {
+        if (showTabs) {
+          sb.write('^I');
+          continue;
+        }
+      } else if (showNonPrinting) {
+        if (ch >= 32) {
+          if (ch < 127) {
+            // ASCII
+            sb.writeCharCode(ch);
+            continue;
+          } else if (ch == 127) {
+            // NULL
+            sb.write('^?');
+            continue;
+          } else {
+            // UNICODE
+            sb.write('U+' + ch.toRadixString(16).padLeft(4, '0').toUpperCase());
+            continue;
+          }
+        } else {
+          sb
+            ..write('^')
+            ..writeCharCode(ch + 64);
+          continue;
+        }
       }
-    } catch (e) {
-      rethrow;
+      sb.writeCharCode(ch);
     }
-  }
-  return lineNumber;
+    if (sb.isNotEmpty) {
+      out.write(sb);
+    }
+  });
 }

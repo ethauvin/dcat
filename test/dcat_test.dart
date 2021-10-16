@@ -10,16 +10,16 @@ import 'package:test/test.dart';
 import '../bin/dcat.dart' as app;
 
 void main() {
+  const sampleBinary = 'test/test.7z';
+  const sampleFile = 'test/test.txt';
+  const sampleText = 'This is a test';
+  const sourceFile = 'bin/dcat.dart';
+
   int exitCode;
-  final List<String> log = [];
-  final sampleBinary = 'test/test.7z';
-  final sampleFile = 'test/test.txt';
-  final sampleText = 'This is a test';
-  final sourceFile = 'bin/dcat.dart';
   final tempDir = Directory.systemTemp.createTempSync();
 
-  Stream<List<int>> mockStdin() async* {
-    yield sampleText.codeUnits;
+  Stream<List<int>> mockStdin({String text = sampleText}) async* {
+    yield text.codeUnits;
   }
 
   File tmpFile() =>
@@ -66,64 +66,83 @@ void main() {
   });
 
   group('lib', () {
+    test('Test CatResult', () async {
+      final result = CatResult();
+      expect(result.isSuccess, true, reason: 'success by default');
+      result.addMessage(exitFailure, sampleText);
+      expect(result.isFailure, true, reason: 'is failure');
+      expect(result.messages.first, equals(sampleText), reason: 'message is sample');
+    });
+
     test('Test cat source', () async {
-      await cat([sourceFile], stdout, log: log);
-      expect(log.isEmpty, false, reason: 'log is empty');
-      expect(log.first, startsWith('// Copyright (c)'),
+      final tmp = tmpFile();
+      await cat([sourceFile], tmp.openWrite());
+      final lines = await tmp.readAsLines();
+      expect(lines.isEmpty, false, reason: 'log is empty');
+      expect(lines.first, startsWith('// Copyright (c)'),
           reason: 'has copyright');
-      expect(log.last, equals('}'));
+      expect(lines.last, equals('}'));
     });
 
     test('Test cat -n source', () async {
+      final tmp = tmpFile();
       final result =
-          await cat([sourceFile], stdout, log: log, showLineNumbers: true);
+          await cat([sourceFile], tmp.openWrite(), showLineNumbers: true);
       expect(result.exitCode, 0, reason: 'result code is 0');
-      expect(log.first, startsWith('     1  // Copyright (c)'),
+      final lines = await tmp.readAsLines();
+      expect(lines.first, startsWith('     1\t// Copyright (c)'),
           reason: 'has copyright');
-      expect(log.last, endsWith('  }'), reason: 'last line');
-      for (final String line in log) {
-        expect(line, matches('^ +\\d+  .*'), reason: 'has line number');
+      expect(lines.last, endsWith('\t}'), reason: 'last line');
+      for (final line in lines) {
+        expect(line, matches('^ +\\d+\t.*'), reason: 'has line number');
       }
     });
 
     test('Test cat source test', () async {
-      await cat([sourceFile, sampleFile], stdout, log: log);
-      expect(log.length, greaterThan(10), reason: 'more than 10 lines');
-      expect(log.first, startsWith('// Copyright'),
+      final tmp = tmpFile();
+      await cat([sourceFile, sampleFile], tmp.openWrite());
+      final lines = await tmp.readAsLines();
+      expect(lines.length, greaterThan(10), reason: 'more than 10 lines');
+      expect(lines.first, startsWith('// Copyright'),
           reason: 'start with copyright');
-      expect(log.last, endsWith('✓'), reason: 'end with checkmark');
+      expect(lines.last, endsWith('✓'), reason: 'end with checkmark');
     });
 
     test('Test cat -E', () async {
-      await cat([sampleFile], stdout, log: log, showEnds: true);
+      final tmp = tmpFile();
+      await cat([sampleFile], tmp.openWrite(), showEnds: true);
       var hasBlank = false;
-      for (final String line in log) {
-        expect(line, endsWith('\$'));
-        if (line == '\$') {
+      final lines = await tmp.readAsLines();
+      for (var i = 0; i < lines.length - 1; i++) {
+        expect(lines[i], endsWith('\$'));
+        if (lines[i] == '\$') {
           hasBlank = true;
         }
       }
       expect(hasBlank, true, reason: 'has blank line');
-      expect(log.last, endsWith('✓\$'), reason: 'has unicode');
+      expect(lines.last, endsWith('✓'), reason: 'has unicode');
     });
 
     test('Test cat -bE', () async {
-      await cat([sampleFile], stdout,
-          log: log, numberNonBlank: true, showEnds: true);
-      var hasBlank = false;
-      for (final String line in log) {
-        expect(line, endsWith('\$'));
-        if (line.contains(RegExp(r'^ +\d+  .*\$$'))) {
-          hasBlank = true;
+      final tmp = tmpFile();
+      await cat([sampleFile], tmp.openWrite(),
+          numberNonBlank: true, showEnds: true);
+      final lines = await tmp.readAsLines();
+      for (var i = 0; i < lines.length - 1; i++) {
+        expect(lines[i], endsWith('\$'), reason: '${lines[i]} ends with \$');
+        if (lines[i] != '\$') {
+          expect(lines[i], contains(RegExp(r'^ +\d+\t.*\$$')),
+              reason: '${lines[i]} is valid');
         }
       }
-      expect(hasBlank, true, reason: 'has blank line');
     });
 
     test('Test cat -T', () async {
-      await cat([sampleFile], stdout, log: log, showTabs: true);
+      final tmp = tmpFile();
+      await cat([sampleFile], tmp.openWrite(), showTabs: true);
       var hasTab = false;
-      for (final String line in log) {
+      final lines = await tmp.readAsLines();
+      for (final String line in lines) {
         if (line.startsWith('^I')) {
           hasTab = true;
           break;
@@ -133,10 +152,12 @@ void main() {
     });
 
     test('Test cat -s', () async {
-      await cat([sampleFile], stdout, log: log, squeezeBlank: true);
+      final tmp = tmpFile();
+      await cat([sampleFile], tmp.openWrite(), squeezeBlank: true);
       var hasSqueeze = true;
       var prevLine = 'foo';
-      for (final String line in log) {
+      final lines = await tmp.readAsLines();
+      for (final String line in lines) {
         if (line == prevLine) {
           hasSqueeze = false;
         }
@@ -146,27 +167,34 @@ void main() {
     });
 
     test('Test cat -A', () async {
-      await cat([sampleFile], stdout,
-          log: log, showNonPrinting: true, showEnds: true, showTabs: true);
-      expect(log.last, equals('^I^A^B^C^DU+00A9^?U+0080U+2713\$'));
+      final tmp = tmpFile();
+      await cat([sampleFile], tmp.openWrite(),
+          showNonPrinting: true, showEnds: true, showTabs: true);
+      final lines = await tmp.readAsLines();
+      expect(lines.first, endsWith('\$'), reason: '\$ at end.');
+      expect(lines.last, equals('^I^A^B^C^DU+00A9^?U+0080U+2713'),
+          reason: "no last linefeed");
     });
 
     test('Test cat -t', () async {
-      await cat([sampleFile], stdout,
-          log: log, showNonPrinting: true, showTabs: true);
-      expect(log.last, equals('^I^A^B^C^DU+00A9^?U+0080U+2713'));
+      final tmp = tmpFile();
+      await cat([sampleFile], tmp.openWrite(),
+          showNonPrinting: true, showTabs: true);
+      final lines = await tmp.readAsLines();
+      expect(lines.last, equals('^I^A^B^C^DU+00A9^?U+0080U+2713'));
     });
 
-    test('Test cat-Abs', () async {
-      await cat([sampleFile], stdout,
-          log: log,
+    test('Test cat -Abs', () async {
+      final tmp = tmpFile();
+      await cat([sampleFile], tmp.openWrite(),
           showNonPrinting: true,
           showEnds: true,
           showTabs: true,
           numberNonBlank: true,
           squeezeBlank: true);
       var blankLines = 0;
-      for (final String line in log) {
+      final lines = await tmp.readAsLines();
+      for (final String line in lines) {
         if (line == '\$') {
           blankLines++;
         }
@@ -175,23 +203,25 @@ void main() {
     });
 
     test('Test cat -v', () async {
-      await cat([sampleFile], stdout, log: log, showNonPrinting: true);
+      final tmp = tmpFile();
+      await cat([sampleFile], tmp.openWrite(), showNonPrinting: true);
       var hasTab = false;
-      for (final String line in log) {
+      final lines = await tmp.readAsLines();
+      for (final String line in lines) {
         if (line.contains('\t')) {
           hasTab = true;
           break;
         }
       }
       expect(hasTab, true, reason: "has real tab");
-      expect(log.last, equals('\t^A^B^C^DU+00A9^?U+0080U+2713'),
+      expect(lines.last, equals('\t^A^B^C^DU+00A9^?U+0080U+2713'),
           reason: 'non-printing');
     });
 
     test('Test cat to file', () async {
       final tmp = tmpFile();
-      final result = await cat([sampleFile], tmp, log: log);
-      expect(result.exitCode, exitSuccess, reason: 'result code is success');
+      final result = await cat([sampleFile], tmp.openWrite());
+      expect(result.isSuccess, true, reason: 'result code is success');
       expect(result.messages.length, 0, reason: 'messages is empty');
       expect(await tmp.exists(), true, reason: 'tmp file exists');
       expect(await tmp.length(), greaterThan(0),
@@ -202,9 +232,8 @@ void main() {
     });
 
     test('Test cat with file and binary', () async {
-      final tmp = tmpFile();
-      final result = await cat([sampleFile, sampleBinary], tmp, log: log);
-      expect(result.exitCode, exitFailure, reason: 'result code is failure');
+      final result = await cat([sampleFile, sampleBinary], stdout);
+      expect(result.isFailure, true, reason: 'result code is failure');
       expect(result.messages.length, 1, reason: 'as one message');
       expect(result.messages.first, contains('Binary'),
           reason: 'message contains binary');
@@ -212,25 +241,33 @@ void main() {
 
     test('Test empty stdin', () async {
       final tmp = tmpFile();
-      var result = await cat([], tmp, input: Stream.empty());
+      var result = await cat([], tmp.openWrite(), input: Stream.empty());
       expect(result.exitCode, exitSuccess, reason: 'cat() is successful');
       expect(result.messages.length, 0, reason: 'cat() has no message');
 
-      result = await cat(['-'], tmp, input: Stream.empty());
+      result = await cat(['-'], tmp.openWrite(), input: Stream.empty());
       expect(result.exitCode, exitSuccess, reason: 'cat(-) is successful');
       expect(result.messages.length, 0, reason: 'cat(-) no message');
     });
 
-    test('Test cat with stdin', () async {
+    test('Test cat -', () async {
       var tmp = tmpFile();
-      var result = await cat(['-'], tmp, input: mockStdin());
-      expect(result.exitCode, exitSuccess, reason: 'result code is failure');
+      final result = await cat(['-'], tmp.openWrite(), input: mockStdin());
+      expect(result.exitCode, exitSuccess, reason: 'result code is successful');
       expect(result.messages.length, 0, reason: 'no message');
-      var lines = await tmp.readAsLines();
       tmp = tmpFile();
       expect(await tmp.exists(), false, reason: 'tmp file does not exists');
-      result = await cat([], tmp, input: mockStdin());
+    });
+
+    test('Test cat()', () async {
+      var tmp = tmpFile();
+      await cat([], tmp.openWrite(), input: mockStdin());
+      var lines = await tmp.readAsLines();
       expect(lines.first, equals(sampleText), reason: 'cat() is sample text');
+      tmp = tmpFile();
+      await cat([], tmp.openWrite(), input: mockStdin(text: "Line 1\nLine 2"));
+      lines = await tmp.readAsLines();
+      expect(lines.length, 2, reason: "two lines");
     });
   });
 }

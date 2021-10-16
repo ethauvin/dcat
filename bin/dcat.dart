@@ -11,8 +11,8 @@ import 'package:indent/indent.dart';
 const appName = 'dcat';
 const appVersion = '1.0.0';
 const helpFlag = 'help';
-const nonBlankFlag = 'number-nonblank';
 const numberFlag = 'number';
+const numberNonBlank = 'number-nonblank';
 const showAllFlag = 'show-all';
 const showEndsFlag = 'show-ends';
 const showNonPrintingEndsFlag = 'show-nonprinting-ends';
@@ -26,13 +26,71 @@ const versionFlag = 'version';
 ///
 /// Usage: `dcat [option] [file]…`
 Future<int> main(List<String> arguments) async {
-  final parser = ArgParser();
-
   exitCode = exitSuccess;
+
+  final parser = await setupArgsParser();
+  final ArgResults argResults;
+  try {
+    argResults = parser.parse(arguments);
+  } on FormatException catch (e) {
+    return printError(
+        "${e.message}\nTry '$appName --$helpFlag' for more information.");
+  }
+
+  if (argResults[helpFlag]) {
+    exitCode = await usage(parser.usage);
+  } else if (argResults[versionFlag]) {
+    exitCode = await printVersion();
+  } else {
+    final paths = argResults.rest;
+    var showEnds = argResults[showEndsFlag];
+    var showTabs = argResults[showTabsFlag];
+    var showLineNumbers = argResults[numberFlag];
+    var showNonBlank = argResults[numberNonBlank];
+    var showNonPrinting = argResults[showNonPrintingFlag];
+
+    if (argResults[showNonPrintingEndsFlag]) {
+      showNonPrinting = showEnds = true;
+    }
+
+    if (argResults[showNonPrintingTabsFlag]) {
+      showNonPrinting = showTabs = true;
+    }
+
+    if (argResults[showAllFlag]) {
+      showNonPrinting = showEnds = showTabs = true;
+    }
+
+    if (showNonBlank) {
+      showLineNumbers = true;
+    }
+
+    final result = await cat(paths, stdout,
+        input: stdin,
+        showEnds: showEnds,
+        showLineNumbers: showLineNumbers,
+        numberNonBlank: showNonBlank,
+        showTabs: showTabs,
+        squeezeBlank: argResults[squeezeBlank],
+        showNonPrinting: showNonPrinting);
+
+    for (final message in result.messages) {
+      await printError(message);
+    }
+
+    exitCode = result.exitCode;
+  }
+
+  return exitCode;
+}
+
+/// Setup the command-line arguments parser.
+Future<ArgParser> setupArgsParser() async {
+  final parser = ArgParser();
 
   parser.addFlag(showAllFlag,
       negatable: false, abbr: 'A', help: 'equivalent to -vET');
-  parser.addFlag(nonBlankFlag,
+  parser.addFlag(numberNonBlank,
       negatable: false,
       abbr: 'b',
       help: 'number nonempty output lines, overrides -n');
@@ -60,53 +118,7 @@ Future<int> main(List<String> arguments) async {
       abbr: 'v',
       help: 'use ^ and U+ notation, except for LFD and TAB');
 
-  final ArgResults argResults;
-  try {
-    argResults = parser.parse(arguments);
-  } on FormatException catch (e) {
-    return printError(
-        "${e.message}\nTry '$appName --$helpFlag' for more information.");
-  }
-
-  if (argResults[helpFlag]) {
-    exitCode = await usage(parser.usage);
-  } else if (argResults[versionFlag]) {
-    exitCode = await printVersion();
-  } else {
-    final paths = argResults.rest;
-    var showEnds = argResults[showEndsFlag];
-    var showTabs = argResults[showTabsFlag];
-    var showNonPrinting = argResults[showNonPrintingFlag];
-
-    if (argResults[showNonPrintingEndsFlag]) {
-      showNonPrinting = showEnds = true;
-    }
-
-    if (argResults[showNonPrintingTabsFlag]) {
-      showNonPrinting = showTabs = true;
-    }
-
-    if (argResults[showAllFlag]) {
-      showNonPrinting = showEnds = showTabs = true;
-    }
-
-    final result = await cat(paths, stdout,
-        input: stdin,
-        showEnds: showEnds,
-        showLineNumbers: argResults[numberFlag],
-        numberNonBlank: argResults[nonBlankFlag],
-        showTabs: showTabs,
-        squeezeBlank: argResults[squeezeBlank],
-        showNonPrinting: showNonPrinting);
-
-    for (final message in result.messages) {
-      await printError(message);
-    }
-
-    exitCode = result.exitCode;
-  }
-
-  return exitCode;
+  return parser;
 }
 
 /// Prints the error [message] to [stderr].
