@@ -22,6 +22,8 @@ const showTabsFlag = 'show-tabs';
 const squeezeBlank = 'squeeze-blank';
 const versionFlag = 'version';
 
+const _homePage = 'https://github.com/ethauvin/dcat';
+
 /// Concatenates files specified in [arguments].
 ///
 /// Usage: `dcat [option] [file]…`
@@ -33,8 +35,9 @@ Future<int> main(List<String> arguments) async {
   try {
     argResults = parser.parse(arguments);
   } on FormatException catch (e) {
-    return printError(
+    await printError(
         "${e.message}\nTry '$appName --$helpFlag' for more information.");
+    return exitFailure;
   }
 
   if (argResults[helpFlag]) {
@@ -121,20 +124,19 @@ Future<ArgParser> setupArgsParser() async {
   return parser;
 }
 
-/// Prints the error [message] to [stderr].
-Future<int> printError(String message) async {
+/// Prints an error [message] to [stderr].
+Future<void> printError(String message) async {
   stderr.writeln("$appName: $message");
-  return exitFailure;
 }
 
 /// Prints the version info.
 Future<int> printVersion() async {
   print('''$appName (Dart cat) $appVersion
 Copyright (C) 2021 Erik C. Thauvin
-License: 3-Clause BSD <https://opensource.org/licenses/BSD-3-Clause>
+License 3-Clause BSD: <https://opensource.org/licenses/BSD-3-Clause>
 
-Inspired by <https://dart.dev/tutorials/server/cmdline>
-Written by Erik C. Thauvin <https://erik.thauvin.net/>''');
+Written by Erik C. Thauvin <https://erik.thauvin.net/>
+Source: $_homePage''');
   return exitSuccess;
 }
 
@@ -150,6 +152,6 @@ Examples:
   $appName f - g  Output f's contents, then standard input, then g's contents.
   $appName        Copy standard input to standard output.
 
-Source and documentation: <https://github.com/ethauvin/dcat>''');
+Source and documentation: <$_homePage>''');
   return exitSuccess;
 }

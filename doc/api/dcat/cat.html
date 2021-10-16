@@ -88,14 +88,15 @@
     bool squeezeBlank = false,
     bool showNonPrinting = false}) async {
   final result = CatResult();
-  final lastLine = _LastLine(0, _lineFeed);
+  final lastLine = _LastLine();
+
   if (paths.isEmpty) {
     if (input != null) {
       try {
         await _writeStream(input, lastLine, output, showEnds, showLineNumbers,
             numberNonBlank, showTabs, squeezeBlank, showNonPrinting);
       } catch (e) {
-        result.addMessage(exitFailure, &#39;$e&#39;);
+        result.addMessage(exitFailure, _formatError(e));
       }
     }
   } else {
@@ -109,20 +110,8 @@
         }
         await _writeStream(stream, lastLine, output, showEnds, showLineNumbers,
             numberNonBlank, showTabs, squeezeBlank, showNonPrinting);
-      } on FileSystemException catch (e) {
-        final String? osMessage = e.osError?.message;
-        final String message;
-        if (osMessage != null &amp;&amp; osMessage.isNotEmpty) {
-          message = osMessage;
-        } else {
-          message = e.message;
-        }
-        result.addMessage(exitFailure, message, path: path);
-      } on FormatException {
-        result.addMessage(exitFailure, &#39;Binary file not supported.&#39;,
-            path: path);
       } catch (e) {
-        result.addMessage(exitFailure, &#39;$e&#39;, path: path);
+        result.addMessage(exitFailure, _formatError(e), path: path);
       }
     }
   }

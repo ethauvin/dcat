@@ -77,7 +77,7 @@ squeezeBlank     | Same as `-s`                  | bool
 showNonPrinting  | Same as `-v`                  | bool
 
 * `paths` and `output` are required.
-* `output` should be an [IOSink](https://api.dart.dev/dart-io/IOSink-class.html) like `stdout` or a [File](https://api.dart.dev/dart-io/File/openWrite.html) stream.
+* `output` should be an [IOSink](https://api.dart.dev/dart-io/IOSink-class.html) such as `stdout` or a [File](https://api.dart.dev/dart-io/File/openWrite.html) stream.
 * `input` can be [stdin](https://api.dart.dev/dart-io/Stdin-class.html).
 
 The remaining optional parameters are similar to the [GNU cat](https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html#cat-invocation) utility.

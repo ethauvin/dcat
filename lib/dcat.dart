@@ -45,10 +45,8 @@ class CatResult {
 
 // Holds the current line number and last character.
 class _LastLine {
-  int lineNumber;
-  int lastChar;
-
-  _LastLine(this.lineNumber, this.lastChar);
+  int lineNumber = 0;
+  int lastChar = _lineFeed;
 }
 
 /// Concatenates files in [paths] to the standard output or a file.
@@ -66,14 +64,15 @@ Future<CatResult> cat(List<String> paths, IOSink output,
     bool squeezeBlank = false,
     bool showNonPrinting = false}) async {
   final result = CatResult();
-  final lastLine = _LastLine(0, _lineFeed);
+  final lastLine = _LastLine();
+
   if (paths.isEmpty) {
     if (input != null) {
       try {
         await _writeStream(input, lastLine, output, showEnds, showLineNumbers,
             numberNonBlank, showTabs, squeezeBlank, showNonPrinting);
       } catch (e) {
-        result.addMessage(exitFailure, '$e');
+        result.addMessage(exitFailure, _formatError(e));
       }
     }
   } else {
@@ -87,24 +86,30 @@ Future<CatResult> cat(List<String> paths, IOSink output,
         }
         await _writeStream(stream, lastLine, output, showEnds, showLineNumbers,
             numberNonBlank, showTabs, squeezeBlank, showNonPrinting);
-      } on FileSystemException catch (e) {
-        final String? osMessage = e.osError?.message;
-        final String message;
-        if (osMessage != null && osMessage.isNotEmpty) {
-          message = osMessage;
-        } else {
-          message = e.message;
-        }
-        result.addMessage(exitFailure, message, path: path);
-      } on FormatException {
-        result.addMessage(exitFailure, 'Binary file not supported.',
-            path: path);
       } catch (e) {
-        result.addMessage(exitFailure, '$e', path: path);
+        result.addMessage(exitFailure, _formatError(e), path: path);
       }
     }
   }
   return result;
+}
+
+// Formats error message.
+String _formatError(Object e) {
+  final String message;
+  if (e is FileSystemException) {
+    final String? osMessage = e.osError?.message;
+    if (osMessage != null && osMessage.isNotEmpty) {
+      message = osMessage;
+    } else {
+      message = e.message;
+    }
+  } else if (e is FormatException) {
+    message = 'Binary file not supported.';
+  } else {
+    message = '$e';
+  }
+  return message;
 }
 
 // Writes parsed data from a stream
@@ -118,9 +123,8 @@ Future<void> _writeStream(
     bool showTabs,
     bool squeezeBlank,
     bool showNonPrinting) async {
-  const tab = 9;
-  int squeeze = 0;
-  final noFlags = !showEnds &&
+  // No flags
+  if (!showEnds &&
       !showLineNumbers &&
       !numberNonBlank &&
       !showTabs &&
@@ -162,6 +166,7 @@ Future<void> _writeStream(
           }
         } else if (ch == tab) {
           if (showTabs) {
+            // TAB
             sb.write('^I');
             continue;
           }
@@ -183,6 +188,7 @@ Future<void> _writeStream(
               continue;
             }
           } else {
+            // CTRL
             sb
               ..write('^')
               ..writeCharCode(ch + 64);
