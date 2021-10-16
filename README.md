@@ -68,7 +68,7 @@ Parameter        | Description                   |  Type
 :--------------- |:----------------------------- | :-------------------
 paths            | The file paths.               | String[]
 output           | The standard output or file.  | [IOSink](https://api.dart.dev/dart-io/IOSink-class.html)
-input            | The standard input.           | Stream<List\<int\>\>?
+input            | The standard input.           | [Stream](https://api.dart.dev/dart-io/Stdin-class.html)
 showEnds         | Same as `-e`                  | bool
 numberNonBlank   | Same as `-b`                  | bool
 showLineNumbers  | Same as `-n`                  | bool

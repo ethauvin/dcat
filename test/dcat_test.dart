@@ -269,5 +269,13 @@ void main() {
       lines = await tmp.readAsLines();
       expect(lines.length, 2, reason: "two lines");
     });
+
+    test('Test cat file -', () async {
+      var tmp = tmpFile();
+      await cat([sampleFile, '-'], tmp.openWrite(),
+          input: mockStdin(text: '\n$sampleText'));
+      var lines = await tmp.readAsLines();
+      expect(lines.last, equals(sampleText));
+    });
   });
 }

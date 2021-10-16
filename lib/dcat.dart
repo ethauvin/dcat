@@ -120,61 +120,75 @@ Future<void> _writeStream(
     bool showNonPrinting) async {
   const tab = 9;
   int squeeze = 0;
+  final noFlags = !showEnds &&
+      !showLineNumbers &&
+      !numberNonBlank &&
+      !showTabs &&
+      !squeezeBlank &&
+      !showNonPrinting;
   final sb = StringBuffer();
   await stream.forEach((data) {
     sb.clear();
     for (final ch in utf8.decode(data).runes) {
-      if (lastLine.lastChar == _lineFeed) {
-        if (squeezeBlank) {
-          if (ch == _lineFeed) {
-            if (squeeze >= 1) {
-              lastLine.lastChar = ch;
+      if (noFlags) {
+        sb.writeCharCode(ch);
+      } else {
+        if (lastLine.lastChar == _lineFeed) {
+          if (squeezeBlank) {
+            if (ch == _lineFeed) {
+              if (squeeze >= 1) {
+                lastLine.lastChar = ch;
+                continue;
+              }
+              squeeze++;
+            } else {
+              squeeze = 0;
+            }
+          }
+          if (showLineNumbers || numberNonBlank) {
+            if (!numberNonBlank || ch != _lineFeed) {
+              sb
+                ..write('${++lastLine.lineNumber}'.padLeft(6))
+                ..write('\t');
+            }
+          }
+        }
+        lastLine.lastChar = ch;
+        if (ch == _lineFeed) {
+          if (showEnds) {
+            sb.write('\$');
+          }
+        } else if (ch == tab) {
+          if (showTabs) {
+            sb.write('^I');
+            continue;
+          }
+        } else if (showNonPrinting) {
+          if (ch >= 32) {
+            if (ch < 127) {
+              // ASCII
+              sb.writeCharCode(ch);
+              continue;
+            } else if (ch == 127) {
+              // NULL
+              sb.write('^?');
+              continue;
+            } else {
+              // UNICODE
+              sb
+                ..write('U+')
+                ..write(ch.toRadixString(16).padLeft(4, '0').toUpperCase());
               continue;
             }
-            squeeze++;
           } else {
-            squeeze = 0;
+            sb
+              ..write('^')
+              ..writeCharCode(ch + 64);
+            continue;
           }
         }
-        if (showLineNumbers || numberNonBlank) {
-          if (!numberNonBlank || ch != _lineFeed) {
-            sb.write('${++lastLine.lineNumber}'.padLeft(6) + '\t');
-          }
-        }
+        sb.writeCharCode(ch);
       }
-      lastLine.lastChar = ch;
-      if (ch == _lineFeed) {
-        if (showEnds) {
-          sb.write('\$');
-        }
-      } else if (ch == tab) {
-        if (showTabs) {
-          sb.write('^I');
-          continue;
-        }
-      } else if (showNonPrinting) {
-        if (ch >= 32) {
-          if (ch < 127) {
-            // ASCII
-            sb.writeCharCode(ch);
-            continue;
-          } else if (ch == 127) {
-            // NULL
-            sb.write('^?');
-            continue;
-          } else {
-            // UNICODE
-            sb.write('U+' + ch.toRadixString(16).padLeft(4, '0').toUpperCase());
-            continue;
-          }
-        } else {
-          sb
-            ..write('^')
-            ..writeCharCode(ch + 64);
-          continue;
-        }
-      }
-      sb.writeCharCode(ch);
     }
     if (sb.isNotEmpty) {
       out.write(sb);
