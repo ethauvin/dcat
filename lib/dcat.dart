@@ -125,14 +125,16 @@ Future<void> _writeStream(
       !numberNonBlank &&
       !showTabs &&
       !squeezeBlank &&
-      !showNonPrinting;
-  final sb = StringBuffer();
-  await stream.forEach((data) {
-    sb.clear();
-    for (final ch in utf8.decode(data).runes) {
-      if (noFlags) {
-        sb.writeCharCode(ch);
-      } else {
+      !showNonPrinting) {
+    await stream.transform(utf8.decoder).forEach(out.write);
+  } else {
+    const tab = 9;
+    int squeeze = 0;
+    final sb = StringBuffer();
+
+    await stream.forEach((data) {
+      sb.clear();
+      for (final ch in utf8.decode(data).runes) {
         if (lastLine.lastChar == _lineFeed) {
           if (squeezeBlank) {
             if (ch == _lineFeed) {
@@ -189,9 +191,9 @@ Future<void> _writeStream(
         }
         sb.writeCharCode(ch);
       }
-    }
-    if (sb.isNotEmpty) {
-      out.write(sb);
-    }
-  });
+      if (sb.isNotEmpty) {
+        out.write(sb);
+      }
+    });
+  }
 }
