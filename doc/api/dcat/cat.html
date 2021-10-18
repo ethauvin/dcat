@@ -93,10 +93,10 @@
   if (paths.isEmpty) {
     if (input != null) {
       try {
-        await _writeStream(input, lastLine, output, numberNonBlank, showEnds,
+        await _copyStream(input, lastLine, output, numberNonBlank, showEnds,
             showLineNumbers, showNonPrinting, showTabs, squeezeBlank);
       } catch (e) {
-        result.addMessage(exitFailure, _formatError(e));
+        result.addMessage(_getErrorMessage(e));
       }
     }
   } else {
@@ -108,10 +108,10 @@
         } else {
           stream = File(path).openRead();
         }
-        await _writeStream(stream, lastLine, output, numberNonBlank, showEnds,
+        await _copyStream(stream, lastLine, output, numberNonBlank, showEnds,
             showLineNumbers, showNonPrinting, showTabs, squeezeBlank);
       } catch (e) {
-        result.addMessage(exitFailure, _formatError(e), path: path);
+        result.addMessage(_getErrorMessage(e), path: path);
       }
     }
   }
