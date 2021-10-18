@@ -12,4 +12,3 @@ dev_dependencies:
 dependencies:
   args: ^2.3.0
   indent: ^2.0.0
-  string_splitter: ^1.0.0+1

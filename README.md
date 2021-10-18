@@ -31,7 +31,7 @@ With no FILE, or when FILE is -, read standard input.
   -T, --show-tabs                display TAB characters as ^I
   -s, --squeeze-blank            suppress repeated empty output lines
       --version                  output version information and exit
-  -v, --show-nonprinting         use ^ and U+ notation, except for LFD and TAB
+  -v, --show-nonprinting         use ^ and M- notation, except for LFD and TAB
 
 Examples:
   dcat f - g  Output f's contents, then standard input, then g's contents.
@@ -94,7 +94,3 @@ if (result.exitCode == exitSuccess) {
   }
 }
 ```
-
-## Differences from [GNU cat](https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html#cat-invocation)
-  - No binary file support.
-  - The [U+](https://en.wikipedia.org/wiki/Unicode) notation is used instead of `M-` for non-printing characters.

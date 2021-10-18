@@ -11,18 +11,17 @@ import 'package:indent/indent.dart';
 const appName = 'dcat';
 const appVersion = '1.0.0';
 const helpFlag = 'help';
+const homePage = 'https://github.com/ethauvin/dcat';
 const numberFlag = 'number';
-const numberNonBlank = 'number-nonblank';
+const numberNonBlankFlag = 'number-nonblank';
 const showAllFlag = 'show-all';
 const showEndsFlag = 'show-ends';
 const showNonPrintingEndsFlag = 'show-nonprinting-ends';
 const showNonPrintingFlag = 'show-nonprinting';
 const showNonPrintingTabsFlag = 'show-nonprinting-tabs';
 const showTabsFlag = 'show-tabs';
-const squeezeBlank = 'squeeze-blank';
+const squeezeBlankFlag = 'squeeze-blank';
 const versionFlag = 'version';
-
-const _homePage = 'https://github.com/ethauvin/dcat';
 
 /// Concatenates files specified in [arguments].
 ///
@@ -47,10 +46,10 @@ Future<int> main(List<String> arguments) async {
   } else {
     final paths = argResults.rest;
     var showEnds = argResults[showEndsFlag];
-    var showTabs = argResults[showTabsFlag];
     var showLineNumbers = argResults[numberFlag];
-    var showNonBlank = argResults[numberNonBlank];
+    final showNonBlank = argResults[numberNonBlankFlag];
     var showNonPrinting = argResults[showNonPrintingFlag];
+    var showTabs = argResults[showTabsFlag];
 
     if (argResults[showNonPrintingEndsFlag]) {
       showNonPrinting = showEnds = true;
@@ -70,12 +69,12 @@ Future<int> main(List<String> arguments) async {
 
     final result = await cat(paths, stdout,
         input: stdin,
+        numberNonBlank: showNonBlank,
         showEnds: showEnds,
         showLineNumbers: showLineNumbers,
-        numberNonBlank: showNonBlank,
+        showNonPrinting: showNonPrinting,
         showTabs: showTabs,
-        squeezeBlank: argResults[squeezeBlank],
-        showNonPrinting: showNonPrinting);
+        squeezeBlank: argResults[squeezeBlankFlag]);
 
     for (final message in result.messages) {
       await printError(message);
@@ -93,7 +92,7 @@ Future<ArgParser> setupArgsParser() async {
 
   parser.addFlag(showAllFlag,
       negatable: false, abbr: 'A', help: 'equivalent to -vET');
-  parser.addFlag(numberNonBlank,
+  parser.addFlag(numberNonBlankFlag,
       negatable: false,
       abbr: 'b',
       help: 'number nonempty output lines, overrides -n');
@@ -109,7 +108,7 @@ Future<ArgParser> setupArgsParser() async {
       negatable: false, abbr: 't', help: 'equivalent to -vT');
   parser.addFlag(showTabsFlag,
       negatable: false, abbr: 'T', help: 'display TAB characters as ^I');
-  parser.addFlag(squeezeBlank,
+  parser.addFlag(squeezeBlankFlag,
       negatable: false,
       abbr: 's',
       help: 'suppress repeated empty output lines');
@@ -119,7 +118,7 @@ Future<ArgParser> setupArgsParser() async {
   parser.addFlag(showNonPrintingFlag,
       negatable: false,
       abbr: 'v',
-      help: 'use ^ and U+ notation, except for LFD and TAB');
+      help: 'use ^ and M- notation, except for LFD and TAB');
 
   return parser;
 }
@@ -131,18 +130,18 @@ Future<void> printError(String message) async {
 
 /// Prints the version info.
 Future<int> printVersion() async {
-  print('''$appName (Dart cat) $appVersion
+  stdout.writeln('''$appName (Dart cat) $appVersion
 Copyright (C) 2021 Erik C. Thauvin
 License 3-Clause BSD: <https://opensource.org/licenses/BSD-3-Clause>
 
 Written by Erik C. Thauvin <https://erik.thauvin.net/>
-Source: $_homePage''');
+Source: $homePage''');
   return exitSuccess;
 }
 
 /// Prints usage with [options].
 Future<int> usage(String options) async {
-  print('''Usage: $appName [OPTION]... [FILE]...
+  stdout.writeln('''Usage: $appName [OPTION]... [FILE]...
 Concatenate FILE(s) to standard output.
 
 With no FILE, or when FILE is -, read standard input.
@@ -152,6 +151,6 @@ Examples:
   $appName f - g  Output f's contents, then standard input, then g's contents.
   $appName        Copy standard input to standard output.
 
-Source and documentation: <$_homePage>''');
+Source and documentation: <$homePage>''');
   return exitSuccess;
 }

@@ -5,7 +5,6 @@
 /// A library to concatenate files to standard output or file.
 library dcat;
 
-import 'dart:convert';
 import 'dart:io';
 
 /// Failure exit code.
@@ -57,20 +56,20 @@ class _LastLine {
 /// The remaining optional parameters are similar to the [GNU cat utility](https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html#cat-invocation).
 Future<CatResult> cat(List<String> paths, IOSink output,
     {Stream<List<int>>? input,
-    bool showEnds = false,
     bool numberNonBlank = false,
+    bool showEnds = false,
     bool showLineNumbers = false,
+    bool showNonPrinting = false,
     bool showTabs = false,
-    bool squeezeBlank = false,
-    bool showNonPrinting = false}) async {
+    bool squeezeBlank = false}) async {
   final result = CatResult();
   final lastLine = _LastLine();
 
   if (paths.isEmpty) {
     if (input != null) {
       try {
-        await _writeStream(input, lastLine, output, showEnds, showLineNumbers,
-            numberNonBlank, showTabs, squeezeBlank, showNonPrinting);
+        await _writeStream(input, lastLine, output, numberNonBlank, showEnds,
+            showLineNumbers, showNonPrinting, showTabs, squeezeBlank);
       } catch (e) {
         result.addMessage(exitFailure, _formatError(e));
       }
@@ -84,8 +83,8 @@ Future<CatResult> cat(List<String> paths, IOSink output,
         } else {
           stream = File(path).openRead();
         }
-        await _writeStream(stream, lastLine, output, showEnds, showLineNumbers,
-            numberNonBlank, showTabs, squeezeBlank, showNonPrinting);
+        await _writeStream(stream, lastLine, output, numberNonBlank, showEnds,
+            showLineNumbers, showNonPrinting, showTabs, squeezeBlank);
       } catch (e) {
         result.addMessage(exitFailure, _formatError(e), path: path);
       }
@@ -104,8 +103,6 @@ String _formatError(Object e) {
     } else {
       message = e.message;
     }
-  } else if (e is FormatException) {
-    message = 'Binary file not supported.';
   } else {
     message = '$e';
   }
@@ -114,15 +111,15 @@ String _formatError(Object e) {
 
 // Writes parsed data from a stream
 Future<void> _writeStream(
-    Stream stream,
+    Stream<List<int>> stream,
     _LastLine lastLine,
     IOSink out,
+    bool numberNonBlank,
     bool showEnds,
     bool showLineNumbers,
-    bool numberNonBlank,
+    bool showNonPrinting,
     bool showTabs,
-    bool squeezeBlank,
-    bool showNonPrinting) async {
+    bool squeezeBlank) async {
   // No flags
   if (!showEnds &&
       !showLineNumbers &&
@@ -130,15 +127,17 @@ Future<void> _writeStream(
       !showTabs &&
       !squeezeBlank &&
       !showNonPrinting) {
-    await stream.transform(utf8.decoder).forEach(out.write);
+    await stream.forEach(out.add);
   } else {
+    const caret = 94;
+    const questionMark = 63;
     const tab = 9;
     int squeeze = 0;
-    final sb = StringBuffer();
+    final List<int> buff = [];
 
     await stream.forEach((data) {
-      sb.clear();
-      for (final ch in utf8.decode(data).runes) {
+      buff.clear();
+      for (final ch in data) {
         if (lastLine.lastChar == _lineFeed) {
           if (squeezeBlank) {
             if (ch == _lineFeed) {
@@ -153,52 +152,67 @@ Future<void> _writeStream(
           }
           if (showLineNumbers || numberNonBlank) {
             if (!numberNonBlank || ch != _lineFeed) {
-              sb
-                ..write('${++lastLine.lineNumber}'.padLeft(6))
-                ..write('\t');
+              buff.addAll('${++lastLine.lineNumber}'.padLeft(6).codeUnits);
+              buff.add(tab);
             }
           }
         }
         lastLine.lastChar = ch;
         if (ch == _lineFeed) {
           if (showEnds) {
-            sb.write('\$');
+            // $ at EOL
+            buff.add(36);
           }
         } else if (ch == tab) {
           if (showTabs) {
-            // TAB
-            sb.write('^I');
+            // TAB (^I)
+            buff
+              ..add(caret)
+              ..add(73);
             continue;
           }
         } else if (showNonPrinting) {
           if (ch >= 32) {
             if (ch < 127) {
               // ASCII
-              sb.writeCharCode(ch);
+              buff.add(ch);
               continue;
             } else if (ch == 127) {
-              // NULL
-              sb.write('^?');
+              // NULL (^?)
+              buff
+                ..add(caret)
+                ..add(questionMark);
               continue;
             } else {
-              // UNICODE
-              sb
-                ..write('U+')
-                ..write(ch.toRadixString(16).padLeft(4, '0').toUpperCase());
+              // HIGH BIT (M-)
+              buff.add(77);
+              buff.add(45);
+              if (ch >= 128 + 32) {
+                if (ch < 128 + 127) {
+                  buff.add(ch - 128);
+                } else {
+                  buff
+                    ..add(caret)
+                    ..add(questionMark);
+                }
+              } else {
+                buff.add(caret);
+                buff.add(ch - 128 + 64);
+              }
               continue;
             }
           } else {
             // CTRL
-            sb
-              ..write('^')
-              ..writeCharCode(ch + 64);
+            buff
+              ..add(caret)
+              ..add(ch + 64);
             continue;
           }
         }
-        sb.writeCharCode(ch);
+        buff.add(ch);
       }
-      if (sb.isNotEmpty) {
-        out.write(sb);
+      if (buff.isNotEmpty) {
+        out.add(buff);
       }
     });
   }
