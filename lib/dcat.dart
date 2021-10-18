@@ -32,8 +32,8 @@ class CatResult {
   bool get isSuccess => exitCode == exitSuccess;
 
   /// Add a message with an optional path.
-  void addMessage(int exitCode, String message, {String? path}) {
-    this.exitCode = exitCode;
+  void addMessage(String message, {String? path}) {
+    exitCode = exitFailure;
     if (path != null && path.isNotEmpty) {
       messages.add('$path: $message');
     } else {
@@ -68,10 +68,10 @@ Future<CatResult> cat(List<String> paths, IOSink output,
   if (paths.isEmpty) {
     if (input != null) {
       try {
-        await _writeStream(input, lastLine, output, numberNonBlank, showEnds,
+        await _copyStream(input, lastLine, output, numberNonBlank, showEnds,
             showLineNumbers, showNonPrinting, showTabs, squeezeBlank);
       } catch (e) {
-        result.addMessage(exitFailure, _formatError(e));
+        result.addMessage(_getErrorMessage(e));
       }
     }
   } else {
@@ -83,34 +83,18 @@ Future<CatResult> cat(List<String> paths, IOSink output,
         } else {
           stream = File(path).openRead();
         }
-        await _writeStream(stream, lastLine, output, numberNonBlank, showEnds,
+        await _copyStream(stream, lastLine, output, numberNonBlank, showEnds,
             showLineNumbers, showNonPrinting, showTabs, squeezeBlank);
       } catch (e) {
-        result.addMessage(exitFailure, _formatError(e), path: path);
+        result.addMessage(_getErrorMessage(e), path: path);
       }
     }
   }
   return result;
 }
 
-// Formats error message.
-String _formatError(Object e) {
-  final String message;
-  if (e is FileSystemException) {
-    final String? osMessage = e.osError?.message;
-    if (osMessage != null && osMessage.isNotEmpty) {
-      message = osMessage;
-    } else {
-      message = e.message;
-    }
-  } else {
-    message = '$e';
-  }
-  return message;
-}
-
-// Writes parsed data from a stream
-Future<void> _writeStream(
+// Copies (and formats) a stream to an IO sink.
+Future<void> _copyStream(
     Stream<List<int>> stream,
     _LastLine lastLine,
     IOSink out,
@@ -216,4 +200,20 @@ Future<void> _writeStream(
       }
     });
   }
+}
+
+// Returns the message (platform specific, if available) for an exception.
+String _getErrorMessage(Object e) {
+  final String message;
+  if (e is FileSystemException) {
+    final String? osMessage = e.osError?.message;
+    if (osMessage != null && osMessage.isNotEmpty) {
+      message = osMessage;
+    } else {
+      message = e.message;
+    }
+  } else {
+    message = '$e';
+  }
+  return message;
 }
