@@ -36,7 +36,8 @@ Future<int> main(List<String> arguments) async {
   } on FormatException catch (e) {
     await printError(
         "${e.message}\nTry '$appName --$helpFlag' for more information.");
-    return exitFailure;
+    exitCode = exitFailure;
+    return exitCode;
   }
 
   if (argResults[helpFlag]) {
