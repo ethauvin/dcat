@@ -202,7 +202,7 @@ Future<void> _copyStream(
   }
 }
 
-// Returns the message (platform specific, if available) for an exception.
+// Returns the message describing an error.
 String _getErrorMessage(Object e) {
   final String message;
   if (e is FileSystemException) {

@@ -2,6 +2,8 @@ name: dcat
 description: Concatenate file(s) to standard output or file
 version: 1.0.0
 homepage: https://github.com/ethauvin/dcat
+repository: https://github.com/ethauvin/dcat
+issue_tracker: https://github.com/ethauvin/dcat/issues
 
 environment:
   sdk: '>=2.14.3 <3.0.0'
