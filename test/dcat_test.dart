@@ -64,21 +64,23 @@ void main() {
     test('CatResult defaults', () async {
       final result = CatResult();
       expect(result.isSuccess, true, reason: 'success by default');
-      expect(result.messages.isEmpty, true, reason: 'empty by default');
-      result.addMessage(sampleText);
+      expect(result.errors.isEmpty, true, reason: 'empty by default');
+      result.addError(sampleText);
       expect(result.isFailure, true, reason: 'is failure');
-      expect(result.messages.first, equals(sampleText),
+      expect(result.errors.first.message, equals(sampleText),
           reason: 'message is sample');
       final path = 'foo/bar';
-      result.addMessage(sampleText, path: path);
-      expect(result.messages.last, equals("$path: $sampleText"), reason: 'message has path');
+      result.addError(path, path: path);
+      expect(result.errors.last.message, equals(path),
+          reason: 'message is foo');
+      expect(result.errors.last.path, equals(path), reason: 'path is foo');
     });
 
     test('cat -', () async {
       var tmp = makeTmpFile();
       final result = await cat(['-'], tmp.openWrite(), input: mockStdin());
       expect(result.exitCode, exitSuccess, reason: 'result code is successful');
-      expect(result.messages.length, 0, reason: 'no message');
+      expect(result.errors.length, 0, reason: 'no error');
       tmp = makeTmpFile();
       expect(await tmp.exists(), false, reason: 'tmp file does not exists');
     });
@@ -195,7 +197,7 @@ void main() {
       final tmp = makeTmpFile();
       await cat([sampleBinary, sampleFile], tmp.openWrite(),
           showNonPrinting: true);
-      var lines = await tmp.readAsLines();
+      final lines = await tmp.readAsLines();
       expect(lines.first, startsWith('7z'));
     });
 
@@ -219,11 +221,21 @@ void main() {
       final tmp = makeTmpFile();
       final result = await cat([sampleFile], tmp.openWrite());
       expect(result.isSuccess, true, reason: 'result code is success');
-      expect(result.messages.length, 0, reason: 'messages is empty');
+      expect(result.errors.length, 0, reason: 'no errors');
       expect(await tmp.exists(), true, reason: 'tmp file exists');
       expect(await tmp.length(), greaterThan(0),
           reason: 'tmp file is not empty');
-      var lines = await tmp.readAsLines();
+      final lines = await tmp.readAsLines();
+      expect(lines.first, startsWith('Lorem'), reason: 'Lorem in first line');
+      expect(lines.last, endsWith('✓'), reason: 'end with checkmark');
+    });
+
+    test('cat < file', () async {
+      final tmp = makeTmpFile();
+      final result =
+          await cat([], tmp.openWrite(), input: File(sampleFile).openRead());
+      expect(result.isSuccess, true, reason: 'result is success');
+      final lines = await tmp.readAsLines();
       expect(lines.first, startsWith('Lorem'), reason: 'Lorem in first line');
       expect(lines.last, endsWith('✓'), reason: 'end with checkmark');
     });
@@ -273,28 +285,45 @@ void main() {
       expect(lines.length, 2, reason: "two lines");
     });
 
-    test('closed stdout', () async {
+    test('stdin empty', () async {
+      final tmp = makeTmpFile();
+      var result = await cat([], tmp.openWrite(), input: Stream.empty());
+      expect(result.exitCode, exitSuccess, reason: 'cat() is successful');
+      expect(result.errors.length, 0, reason: 'cat() has no errors');
+      result = await cat(['-'], tmp.openWrite(), input: Stream.empty());
+      expect(result.exitCode, exitSuccess, reason: 'cat(-) is successful');
+      expect(result.errors.length, 0, reason: 'cat(-) no errors');
+    });
+
+    test('stdin error', () async {
+      final result =
+          await cat([], stdout, input: Stream.error(Exception(sampleText)));
+      expect(result.isFailure, true, reason: 'cat() is failure');
+      expect(result.errors.first.message, contains(sampleText),
+          reason: 'error is sample');
+    });
+
+    test('stdin filesystem error', () async {
+      final result = await cat([], stdout,
+          input: Stream.error(FileSystemException(sampleText)));
+      expect(result.isFailure, true, reason: 'cat() is failure');
+      expect(result.errors.first.message, contains(sampleText),
+          reason: 'error is sample');
+    });
+
+    test('stdin invalid', () async {
+      final tmp = makeTmpFile();
+      final result = await cat([], tmp.openWrite(), input: null);
+      expect(result.exitCode, exitSuccess);
+    });
+
+    test('stdout closed', () async {
       final tmp = makeTmpFile();
       final stream = tmp.openWrite();
       stream.close();
       final result = await cat([sampleFile], stream);
-      expect(result.messages.first, contains("closed"));
-    });
-
-    test('empty stdin', () async {
-      final tmp = makeTmpFile();
-      var result = await cat([], tmp.openWrite(), input: Stream.empty());
-      expect(result.exitCode, exitSuccess, reason: 'cat() is successful');
-      expect(result.messages.length, 0, reason: 'cat() has no message');
-      result = await cat(['-'], tmp.openWrite(), input: Stream.empty());
-      expect(result.exitCode, exitSuccess, reason: 'cat(-) is successful');
-      expect(result.messages.length, 0, reason: 'cat(-) no message');
-    });
-
-    test('invalid stdin', () async {
-      final tmp = makeTmpFile();
-      final result = await cat([], tmp.openWrite(), input: null);
-      expect(result.exitCode, exitSuccess);
+      expect(result.errors.first.message, contains("closed"),
+          reason: 'stream is closed');
     });
   });
 }

@@ -23,9 +23,9 @@ const showTabsFlag = 'show-tabs';
 const squeezeBlankFlag = 'squeeze-blank';
 const versionFlag = 'version';
 
-/// Concatenates files specified in [arguments].
-///
-/// Usage: `dcat [option] [file]…`
+// Concatenates file(s) to standard output.
+//
+// Usage: `dcat [option] [file]…`
 Future<int> main(List<String> arguments) async {
   exitCode = exitSuccess;
 
@@ -34,8 +34,8 @@ Future<int> main(List<String> arguments) async {
   try {
     argResults = parser.parse(arguments);
   } on FormatException catch (e) {
-    await printError(
-        "${e.message}\nTry '$appName --$helpFlag' for more information.");
+    stderr.writeln('''$appName: ${e.message}
+Try '$appName --$helpFlag' for more information.''');
     exitCode = exitFailure;
     return exitCode;
   }
@@ -77,8 +77,8 @@ Future<int> main(List<String> arguments) async {
         showTabs: showTabs,
         squeezeBlank: argResults[squeezeBlankFlag]);
 
-    for (final message in result.messages) {
-      await printError(message);
+    for (final error in result.errors) {
+      await printError(error);
     }
 
     exitCode = result.exitCode;
@@ -87,7 +87,7 @@ Future<int> main(List<String> arguments) async {
   return exitCode;
 }
 
-/// Setup the command-line arguments parser.
+// Sets up the command-line arguments parser.
 Future<ArgParser> setupArgsParser() async {
   final parser = ArgParser();
 
@@ -124,12 +124,13 @@ Future<ArgParser> setupArgsParser() async {
   return parser;
 }
 
-/// Prints an error [message] to [stderr].
-Future<void> printError(String message) async {
-  stderr.writeln("$appName: $message");
+// Prints an error to stderr.
+Future<void> printError(CatError error) async {
+  stderr.writeln(
+      '$appName: ' + (error.hasPath ? '${error.path}: ' : '') + error.message);
 }
 
-/// Prints the version info.
+// Prints the version info.
 Future<int> printVersion() async {
   stdout.writeln('''$appName (Dart cat) $appVersion
 Copyright (C) 2021 Erik C. Thauvin
@@ -140,7 +141,7 @@ Source: $homePage''');
   return exitSuccess;
 }
 
-/// Prints usage with [options].
+// Prints the help/usage.
 Future<int> usage(String options) async {
   stdout.writeln('''Usage: $appName [OPTION]... [FILE]...
 Concatenate FILE(s) to standard output.

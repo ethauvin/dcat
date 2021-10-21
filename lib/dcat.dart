@@ -7,21 +7,33 @@ library dcat;
 
 import 'dart:io';
 
-/// Failure exit code.
+/// The exit status code for failure.
 const exitFailure = 1;
 
-/// Success exit code.
+/// The exit status code for success.
 const exitSuccess = 0;
 
 const _lineFeed = 10;
 
-/// Holds the [cat] result [exitCode] and error [messages].
+/// Holds the error [message] and [path] of the file that caused the error.
+class CatError {
+  /// The error message.
+  String message;
+  /// The file path, if any.
+  String? path;
+
+  bool get hasPath => (path != null && path!.isNotEmpty);
+
+  CatError(this.message, {this.path});
+}
+
+/// Holds the [cat] result [exitCode] and [errors].
 class CatResult {
-  /// The exit code.
+  /// The exit status code.
   int exitCode = exitSuccess;
 
-  /// The error messages.
-  final List<String> messages = [];
+  /// The list of errors.
+  final List<CatError> errors = [];
 
   CatResult();
 
@@ -31,13 +43,13 @@ class CatResult {
   /// Returns `true` if the [exitCode] is [exitSuccess].
   bool get isSuccess => exitCode == exitSuccess;
 
-  /// Add a message with an optional path.
-  void addMessage(String message, {String? path}) {
+  /// Adds an error [message] and [path].
+  void addError(String message, {String? path}) {
     exitCode = exitFailure;
     if (path != null && path.isNotEmpty) {
-      messages.add('$path: $message');
+      errors.add(CatError(message, path: path));
     } else {
-      messages.add(message);
+      errors.add(CatError(message));
     }
   }
 }
@@ -71,7 +83,7 @@ Future<CatResult> cat(List<String> paths, IOSink output,
         await _copyStream(input, lastLine, output, numberNonBlank, showEnds,
             showLineNumbers, showNonPrinting, showTabs, squeezeBlank);
       } catch (e) {
-        result.addMessage(_getErrorMessage(e));
+        result.addError(_getErrorMessage(e));
       }
     }
   } else {
@@ -86,7 +98,7 @@ Future<CatResult> cat(List<String> paths, IOSink output,
         await _copyStream(stream, lastLine, output, numberNonBlank, showEnds,
             showLineNumbers, showNonPrinting, showTabs, squeezeBlank);
       } catch (e) {
-        result.addMessage(_getErrorMessage(e), path: path);
+        result.addError(_getErrorMessage(e), path: path);
       }
     }
   }

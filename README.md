@@ -56,8 +56,8 @@ import 'package:dcat/dcat.dart';
 final result = await cat(['path/to/file', 'path/to/otherfile]'],
     File('path/to/outfile').openWrite());
 if (result.isFailure) {
-  for (final message in result.messages) {
-    print("Error: $message");
+  for (final error in result.errors) {
+    print('Error: ${error.message}');
   }
 }
 ```
@@ -82,15 +82,16 @@ showNonPrinting  | Same as `-v`                  | bool
 
 The remaining optional parameters are similar to the [GNU cat](https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html#cat-invocation) utility.
 
-A `CatResult` object is returned which contains the `exitCode` (`exitSuccess` or `exitFailure`) and error `messages` if any:
+A `CatResult` object is returned which contains the `exitCode` (`exitSuccess` or `exitFailure`) and `errors`, if any:
 
 ```dart
-final result = await cat(['path/to/file'], stdout);
-if (result.exitCode == exitSuccess) {
-  ...
+final result = 
+    await cat(['path/to/file'], stdout, showLineNumbers: true);
+if (result.exitCode == exitSuccess) { // or result.isSuccess
+...
 } else {
-  for (final message in result.messages) {
-    stderr.writeln("Error: $message");
+  for (final error in result.errors) {
+    stderr.writeln("Error with '${error.path}': ${error.message}");
   }
 }
 ```
