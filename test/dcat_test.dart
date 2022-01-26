@@ -254,6 +254,17 @@ void main() {
       expect(lines.last, equals(sampleText));
     });
 
+    test('cat file - source', () async {
+      final tmp = makeTmpFile();
+      final result = await cat([sampleFile, '-'], tmp.openWrite(),
+          input: File(sourceFile).openRead());
+      expect(result.isSuccess, true, reason: 'result is success');
+      final lines = await tmp.readAsLines();
+      expect(lines.first, startsWith('Lorem'), reason: 'Lorem in first line');
+      expect(lines.last.endsWith('✓'), false,
+          reason: "doesn't end with checkmark");
+    });
+
     test('cat source', () async {
       final tmp = makeTmpFile();
       await cat([sourceFile], tmp.openWrite());

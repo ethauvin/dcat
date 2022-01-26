@@ -7,6 +7,7 @@ GREEN='\033[0;32m'
 
 for o in -A -b -e -E -n -s -t -T -v
 do
+    echo -e "Testing: cat $o"
     cat $o test/* > $TMPCAT
     bin/dcat $o test/* > $TMPDCAT
     if  ! $(diff -q $TMPCAT $TMPDCAT);
