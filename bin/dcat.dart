@@ -1,4 +1,4 @@
-// Copyright (c) 2021, Erik C. Thauvin. All rights reserved.
+// Copyright (c) 2021-2022, Erik C. Thauvin. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be found
 // in the LICENSE file.
 
@@ -133,7 +133,7 @@ Future<void> printError(CatError error) async {
 // Prints the version info.
 Future<int> printVersion() async {
   stdout.writeln('''$appName (Dart cat) $appVersion
-Copyright (C) 2021 Erik C. Thauvin
+Copyright (C) 2021-2022 Erik C. Thauvin
 License 3-Clause BSD: <https://opensource.org/licenses/BSD-3-Clause>
 
 Written by Erik C. Thauvin <https://erik.thauvin.net/>
