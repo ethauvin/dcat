@@ -50,6 +50,10 @@ dart compile exe bin/dcat.dart
 ```
 
 ## Library Usage
+```sh
+dart pub add dcat
+```
+
 ```dart
 import 'package:dcat/dcat.dart';
 
@@ -88,10 +92,12 @@ A `CatResult` object is returned which contains the `exitCode` (`exitSuccess` or
 final result = 
     await cat(['path/to/file'], stdout, showLineNumbers: true);
 if (result.exitCode == exitSuccess) { // or result.isSuccess
-...
+  // ...
 } else {
   for (final error in result.errors) {
     stderr.writeln("Error with '${error.path}': ${error.message}");
   }
 }
 ```
+
+[View Full Example](https://github.com/ethauvin/dcat/blob/master/example/example.dart)

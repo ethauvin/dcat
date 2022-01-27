@@ -5,7 +5,13 @@
 *.class
 *.code-workspace
 *.ctxt
+*.dart.js
+*.info.json
 *.iws
+*.js
+*.js.deps
+*.js.map
+*.js_
 *.log
 *.nar
 *.rar
@@ -15,6 +21,9 @@
 .DS_Store
 .classpath
 .dart_tool/
+.env*
+.flutter-plugins
+.flutter-plugins-dependencies
 .gradle
 .history
 .kobalt
@@ -66,6 +75,7 @@ dependency-reduced-pom.xml
 deploy/
 dist/
 doc/
+doc/api/
 ehthumbs.db
 fabric.properties
 gen/
