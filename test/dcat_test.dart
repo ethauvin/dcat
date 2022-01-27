@@ -49,9 +49,9 @@ void main() {
 
     test('missing file', () async {
       exitCode = await app.main(['foo']);
-      expect(exitCode, exitFailure, reason: 'foo not found');
+      expect(exitCode, exitFailure, reason: 'foo should not be found');
       exitCode = await app.main([sourceFile, 'foo']);
-      expect(exitCode, exitFailure, reason: 'one missing file');
+      expect(exitCode, exitFailure, reason: 'source file should be missing');
     });
 
     test('no directories', () async {
@@ -63,26 +63,28 @@ void main() {
   group('lib', () {
     test('CatResult defaults', () async {
       final result = CatResult();
-      expect(result.isSuccess, true, reason: 'success by default');
-      expect(result.errors.isEmpty, true, reason: 'empty by default');
+      expect(result.isSuccess, true, reason: 'should be success by default');
+      expect(result.errors.isEmpty, true, reason: 'should be empty by default');
       result.addError(sampleText);
-      expect(result.isFailure, true, reason: 'is failure');
+      expect(result.isFailure, true, reason: 'was not failure');
       expect(result.errors.first.message, equals(sampleText),
-          reason: 'message is sample');
+          reason: 'message was not sample');
       final path = 'foo/bar';
       result.addError(path, path: path);
       expect(result.errors.last.message, equals(path),
-          reason: 'message is foo');
-      expect(result.errors.last.path, equals(path), reason: 'path is foo');
+          reason: 'message was not foo');
+      expect(result.errors.last.path, equals(path), reason: 'path was not foo');
     });
 
     test('cat -', () async {
-      var tmp = makeTmpFile();
+      final tmp = makeTmpFile();
       final result = await cat(['-'], tmp.openWrite(), input: mockStdin());
-      expect(result.exitCode, exitSuccess, reason: 'result code is successful');
-      expect(result.errors.length, 0, reason: 'no error');
-      tmp = makeTmpFile();
-      expect(await tmp.exists(), false, reason: 'tmp file does not exists');
+      expect(result.exitCode, exitSuccess,
+          reason: 'result code was not success');
+      expect(result.errors.length, 0, reason: 'should have no error');
+      final lines = await tmp.readAsLines();
+      expect(lines.first, equals(sampleText),
+          reason: 'first line was not sample text');
     });
 
     test('cat -A', () async {
@@ -90,9 +92,9 @@ void main() {
       await cat([sampleFile], tmp.openWrite(),
           showNonPrinting: true, showEnds: true, showTabs: true);
       final lines = await tmp.readAsLines();
-      expect(lines.first, endsWith('\$'), reason: '\$ at end.');
+      expect(lines.first, endsWith('\$'), reason: 'should end with \$');
       expect(lines.last, equals('^I^A^B^C^DM-BM-)^?M-BM-^@M-bM-^\\M-^S'),
-          reason: "no last linefeed");
+          reason: "missing linefeed");
     });
 
     test('cat -Abs', () async {
@@ -110,7 +112,7 @@ void main() {
           blankLines++;
         }
       }
-      expect(blankLines, 2, reason: 'only 2 blank lines.');
+      expect(blankLines, 2, reason: 'should only have 2 blank lines.');
     });
 
     test('cat -E', () async {
@@ -124,8 +126,8 @@ void main() {
           hasBlank = true;
         }
       }
-      expect(hasBlank, true, reason: 'has blank line');
-      expect(lines.last, endsWith('✓'), reason: 'has unicode');
+      expect(hasBlank, true, reason: 'should have blank line');
+      expect(lines.last, endsWith('✓'), reason: 'missing ending checkmark');
     });
 
     test('cat -T', () async {
@@ -139,7 +141,7 @@ void main() {
           break;
         }
       }
-      expect(hasTab, true, reason: 'has tab');
+      expect(hasTab, true, reason: 'should have tab');
     });
 
     test('cat -bE', () async {
@@ -148,10 +150,11 @@ void main() {
           numberNonBlank: true, showEnds: true);
       final lines = await tmp.readAsLines();
       for (var i = 0; i < lines.length - 1; i++) {
-        expect(lines[i], endsWith('\$'), reason: '${lines[i]} ends with \$');
+        expect(lines[i], endsWith('\$'),
+            reason: '${lines[i]} should end with \$');
         if (lines[i] != '\$') {
           expect(lines[i], contains(RegExp(r'^ +\d+\t.*\$$')),
-              reason: '${lines[i]} is valid');
+              reason: '${lines[i]} was invalid');
         }
       }
     });
@@ -160,13 +163,14 @@ void main() {
       final tmp = makeTmpFile();
       final result =
           await cat([sourceFile], tmp.openWrite(), showLineNumbers: true);
-      expect(result.exitCode, 0, reason: 'result code is 0');
+      expect(result.exitCode, 0, reason: 'result code was not 0');
       final lines = await tmp.readAsLines();
       expect(lines.first, startsWith('     1\t// Copyright (c)'),
-          reason: 'has copyright');
-      expect(lines.last, endsWith('\t}'), reason: 'last line');
+          reason: 'copyright was missing');
+      expect(lines.last, endsWith('\t}'),
+          reason: 'last line should end with tab');
       for (final line in lines) {
-        expect(line, matches('^ +\\d+\t.*'), reason: 'has line number');
+        expect(line, matches('^ +\\d+\t.*'), reason: 'missing line number');
       }
     });
 
@@ -182,7 +186,7 @@ void main() {
         }
         prevLine = line;
       }
-      expect(hasSqueeze, true, reason: 'has squeeze');
+      expect(hasSqueeze, true, reason: 'was not squeezed');
     });
 
     test('cat -t', () async {
@@ -212,32 +216,34 @@ void main() {
           break;
         }
       }
-      expect(hasTab, true, reason: "has real tab");
+      expect(hasTab, true, reason: "should have tab");
       expect(lines.last, equals('\t^A^B^C^DM-BM-)^?M-BM-^@M-bM-^\\M-^S'),
-          reason: 'non-printing');
+          reason: 'invalid non-printing');
     });
 
     test('cat > file', () async {
       final tmp = makeTmpFile();
       final result = await cat([sampleFile], tmp.openWrite());
-      expect(result.isSuccess, true, reason: 'result code is success');
-      expect(result.errors.length, 0, reason: 'no errors');
-      expect(await tmp.exists(), true, reason: 'tmp file exists');
+      expect(result.isSuccess, true, reason: 'result code was not success');
+      expect(result.errors.length, 0, reason: 'should have no error');
+      expect(await tmp.exists(), true, reason: 'tmp file missing');
       expect(await tmp.length(), greaterThan(0),
-          reason: 'tmp file is not empty');
+          reason: 'tmp file should not be empty');
       final lines = await tmp.readAsLines();
-      expect(lines.first, startsWith('Lorem'), reason: 'Lorem in first line');
-      expect(lines.last, endsWith('✓'), reason: 'end with checkmark');
+      expect(lines.first, startsWith('Lorem'),
+          reason: 'first line should start with Lorem');
+      expect(lines.last, endsWith('✓'), reason: 'missing ending checkmark');
     });
 
     test('cat < file', () async {
       final tmp = makeTmpFile();
       final result =
           await cat([], tmp.openWrite(), input: File(sampleFile).openRead());
-      expect(result.isSuccess, true, reason: 'result is success');
+      expect(result.isSuccess, true, reason: 'result was not success');
       final lines = await tmp.readAsLines();
-      expect(lines.first, startsWith('Lorem'), reason: 'Lorem in first line');
-      expect(lines.last, endsWith('✓'), reason: 'end with checkmark');
+      expect(lines.first, startsWith('Lorem'),
+          reason: 'first line should start with Lorem');
+      expect(lines.last, endsWith('✓'), reason: 'missing ending checkmark');
     });
 
     test('cat binary', () async {
@@ -258,20 +264,21 @@ void main() {
       final tmp = makeTmpFile();
       final result = await cat([sampleFile, '-'], tmp.openWrite(),
           input: File(sourceFile).openRead());
-      expect(result.isSuccess, true, reason: 'result is success');
+      expect(result.isSuccess, true, reason: 'result was not success');
       final lines = await tmp.readAsLines();
-      expect(lines.first, startsWith('Lorem'), reason: 'Lorem in first line');
+      expect(lines.first, startsWith('Lorem'),
+          reason: 'first line should start with Lorem');
       expect(lines.last.endsWith('✓'), false,
-          reason: "doesn't end with checkmark");
+          reason: "missing ending checkmark");
     });
 
     test('cat source', () async {
       final tmp = makeTmpFile();
       await cat([sourceFile], tmp.openWrite());
       final lines = await tmp.readAsLines();
-      expect(lines.isEmpty, false, reason: 'log is empty');
+      expect(lines.isEmpty, false, reason: 'log was not empty');
       expect(lines.first, startsWith('// Copyright (c)'),
-          reason: 'has copyright');
+          reason: 'missing copyright');
       expect(lines.last, equals('}'));
     });
 
@@ -279,47 +286,49 @@ void main() {
       final tmp = makeTmpFile();
       await cat([sourceFile, sampleFile], tmp.openWrite());
       final lines = await tmp.readAsLines();
-      expect(lines.length, greaterThan(10), reason: 'more than 10 lines');
+      expect(lines.length, greaterThan(10),
+          reason: 'should be more than 10 lines');
       expect(lines.first, startsWith('// Copyright'),
-          reason: 'start with copyright');
-      expect(lines.last, endsWith('✓'), reason: 'end with checkmark');
+          reason: 'missing copyright');
+      expect(lines.last, endsWith('✓'), reason: 'missing ending checkmark');
     });
 
     test('cat()', () async {
       var tmp = makeTmpFile();
       await cat([], tmp.openWrite(), input: mockStdin());
       var lines = await tmp.readAsLines();
-      expect(lines.first, equals(sampleText), reason: 'cat() is sample text');
+      expect(lines.first, equals(sampleText),
+          reason: 'cat() was not sample text');
       tmp = makeTmpFile();
       await cat([], tmp.openWrite(), input: mockStdin(text: "Line 1\nLine 2"));
       lines = await tmp.readAsLines();
-      expect(lines.length, 2, reason: "two lines");
+      expect(lines.length, 2, reason: "tmp file should only be 2 lines");
     });
 
     test('stdin empty', () async {
       final tmp = makeTmpFile();
       var result = await cat([], tmp.openWrite(), input: Stream.empty());
-      expect(result.exitCode, exitSuccess, reason: 'cat() is successful');
-      expect(result.errors.length, 0, reason: 'cat() has no errors');
+      expect(result.exitCode, exitSuccess, reason: 'cat() was not successful');
+      expect(result.errors.length, 0, reason: 'cat() has errors');
       result = await cat(['-'], tmp.openWrite(), input: Stream.empty());
-      expect(result.exitCode, exitSuccess, reason: 'cat(-) is successful');
-      expect(result.errors.length, 0, reason: 'cat(-) no errors');
+      expect(result.exitCode, exitSuccess, reason: 'cat(-) was not successful');
+      expect(result.errors.length, 0, reason: 'cat(-) has errors');
     });
 
     test('stdin error', () async {
       final result =
           await cat([], stdout, input: Stream.error(Exception(sampleText)));
-      expect(result.isFailure, true, reason: 'cat() is failure');
+      expect(result.isFailure, true, reason: 'cat() was not failure');
       expect(result.errors.first.message, contains(sampleText),
-          reason: 'error is sample');
+          reason: 'error was not sample');
     });
 
     test('stdin filesystem error', () async {
       final result = await cat([], stdout,
           input: Stream.error(FileSystemException(sampleText)));
-      expect(result.isFailure, true, reason: 'cat() is failure');
+      expect(result.isFailure, true, reason: 'cat() was not failure');
       expect(result.errors.first.message, contains(sampleText),
-          reason: 'error is sample');
+          reason: 'error was not sample');
     });
 
     test('stdin invalid', () async {
@@ -334,7 +343,7 @@ void main() {
       stream.close();
       final result = await cat([sampleFile], stream);
       expect(result.errors.first.message, contains("closed"),
-          reason: 'stream is closed');
+          reason: 'stream was not closed');
     });
   });
 }
