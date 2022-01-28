@@ -19,6 +19,7 @@ const _lineFeed = 10;
 class CatError {
   /// The error message.
   String message;
+
   /// The file path, if any.
   String? path;
 

@@ -1,15 +1,15 @@
-[![License (3-Clause BSD)](https://img.shields.io/badge/license-BSD%203--Clause-blue.svg?style=flat-square)](http://opensource.org/licenses/BSD-3-Clause)
+[![License (3-Clause BSD)](https://img.shields.io/badge/license-BSD%203--Clause-blue.svg?style=flat-square)](https://opensource.org/licenses/BSD-3-Clause)
 [![GitHub CI](https://github.com/ethauvin/dcat/actions/workflows/dart.yml/badge.svg)](https://github.com/ethauvin/dcat/actions/workflows/dart.yml)
 [![codecov](https://codecov.io/gh/ethauvin/dcat/branch/master/graph/badge.svg?token=9PC4K4IZXJ)](https://codecov.io/gh/ethauvin/dcat)
 [![pub package](https://img.shields.io/pub/v/dcat.svg)](https://pub.dev/packages/dcat)
 
 # dcat: Concatenate File(s) to Standard Output or File
 
-A **cat** command-line and library implementation in [Dart](https://dart.dev/), inspired by the [Write command-line apps sample code](https://dart.dev/tutorials/server/cmdline).
+A [Dart](https://dart.dev/) command-line and library implementation of the standard **cat** Unix utility, inspired by the [Write command-line apps sample code](https://dart.dev/tutorials/server/cmdline).
 
 ## Synopsis
 
-**dcat** copies each file, or standard input if none are given, to standard output or file.
+**dcat** sequentially reads files, or standard input if none are given, writing them to standard output or file.
 
 ## Command-Line Usage
 
@@ -31,8 +31,8 @@ With no FILE, or when FILE is -, read standard input.
   -t, --show-nonprinting-tabs    equivalent to -vT
   -T, --show-tabs                display TAB characters as ^I
   -s, --squeeze-blank            suppress repeated empty output lines
-      --version                  output version information and exit
   -v, --show-nonprinting         use ^ and M- notation, except for LFD and TAB
+      --version                  output version information and exit
 
 Examples:
   dcat f - g  Output f's contents, then standard input, then g's contents.
@@ -40,7 +40,7 @@ Examples:
   ```
 ## Compile Standalone Application
   
-### *nix
+### Linux / MacOS
 ```sh
 dart compile exe -o bin/dcat bin/dcat.dart
 ```
@@ -66,6 +66,7 @@ if (result.isFailure) {
   }
 }
 ```
+[View Full Instructions](https://pub.dev/packages/dcat/install)
 
 The `cat` function supports the following parameters:
 
