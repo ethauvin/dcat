@@ -113,13 +113,13 @@ Future<ArgParser> setupArgsParser() async {
       negatable: false,
       abbr: 's',
       help: 'suppress repeated empty output lines');
-  parser.addFlag(versionFlag,
-      negatable: false, help: 'output version information and exit');
   parser.addFlag('ignored', negatable: false, hide: true, abbr: 'u');
   parser.addFlag(showNonPrintingFlag,
       negatable: false,
       abbr: 'v',
       help: 'use ^ and M- notation, except for LFD and TAB');
+  parser.addFlag(versionFlag,
+      negatable: false, help: 'output version information and exit');
 
   return parser;
 }

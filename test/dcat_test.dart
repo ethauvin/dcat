@@ -16,16 +16,16 @@ void main() {
   const sourceFile = 'bin/dcat.dart';
 
   int exitCode;
-  final tempDir = Directory.systemTemp.createTempSync();
+  final tmpDir = Directory.systemTemp.createTempSync();
 
   Stream<List<int>> mockStdin({String text = sampleText}) async* {
     yield text.codeUnits;
   }
 
   File makeTmpFile() =>
-      File("${tempDir.path}/tmp-${DateTime.now().millisecondsSinceEpoch}.txt");
+      File("${tmpDir.path}/${DateTime.now().millisecondsSinceEpoch}.txt");
 
-  tearDownAll(() => tempDir.delete(recursive: true));
+  tearDownAll(() => tmpDir.delete(recursive: true));
 
   group('app', () {
     test('--help', () async {

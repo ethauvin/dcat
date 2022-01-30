@@ -36,8 +36,6 @@ class CatResult {
   /// The list of errors.
   final List<CatError> errors = [];
 
-  CatResult();
-
   /// Returns `true` if the [exitCode] is [exitFailure].
   bool get isFailure => exitCode == exitFailure;
 
@@ -47,11 +45,7 @@ class CatResult {
   /// Adds an error [message] and [path].
   void addError(String message, {String? path}) {
     exitCode = exitFailure;
-    if (path != null && path.isNotEmpty) {
-      errors.add(CatError(message, path: path));
-    } else {
-      errors.add(CatError(message));
-    }
+    errors.add(CatError(message, path: path));
   }
 }
 
@@ -147,11 +141,10 @@ Future<void> _copyStream(
               squeeze = 0;
             }
           }
-          if (showLineNumbers || numberNonBlank) {
-            if (!numberNonBlank || ch != _lineFeed) {
-              buff.addAll('${++lastLine.lineNumber}'.padLeft(6).codeUnits);
-              buff.add(tab);
-            }
+          if ((showLineNumbers || numberNonBlank) &&
+              (!numberNonBlank || ch != _lineFeed)) {
+            buff.addAll('${++lastLine.lineNumber}'.padLeft(6).codeUnits);
+            buff.add(tab);
           }
         }
         lastLine.lastChar = ch;
