@@ -1,7 +1,7 @@
-[![License (3-Clause BSD)](https://img.shields.io/badge/license-BSD%203--Clause-blue.svg?style=flat-square)](https://opensource.org/licenses/BSD-3-Clause)
+[![License (3-Clause BSD)](https://img.shields.io/badge/license-BSD%203--Clause-blue.svg?logo=open-source-initiative&logoColor=white)](https://opensource.org/licenses/BSD-3-Clause)
 [![GitHub CI](https://github.com/ethauvin/dcat/actions/workflows/dart.yml/badge.svg)](https://github.com/ethauvin/dcat/actions/workflows/dart.yml)
 [![codecov](https://codecov.io/gh/ethauvin/dcat/branch/master/graph/badge.svg?token=9PC4K4IZXJ)](https://codecov.io/gh/ethauvin/dcat)
-[![pub package](https://img.shields.io/pub/v/dcat.svg)](https://pub.dev/packages/dcat)
+[![pub package](https://img.shields.io/pub/v/dcat.svg?logo=dart)](https://pub.dev/packages/dcat)
 
 # dcat: Concatenate File(s) to Standard Output or File
 

@@ -1,6 +1,6 @@
 name: dcat
 description: An implementation of the standard cat Unix utility that concatenates file(s) to standard output or file.
-version: 1.0.0
+version: 1.0.1
 repository: https://github.com/ethauvin/dcat
 issue_tracker: https://github.com/ethauvin/dcat/issues
 
