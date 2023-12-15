@@ -13,10 +13,11 @@ A [Dart](https://dart.dev/) command-line and library implementation of the stand
 
 ## Command-Line Usage
 
-```sh
+```console
 dcat --help
 ```
-```
+
+```text
 Usage: dcat [OPTION]... [FILE]...
 Concatenate FILE(s) to standard output.
 
@@ -38,20 +39,24 @@ Examples:
   dcat f - g  Output f's contents, then standard input, then g's contents.
   dcat        Copy standard input to standard output.
   ```
+
 ## Compile Standalone Application
   
 ### Linux / MacOS
-```sh
+
+```console
 dart compile exe -o bin/dcat bin/dcat.dart
 ```
 
 ### Windows
-```cmd
+
+```console
 dart compile exe bin/dcat.dart
 ```
 
 ## Library Usage
-```sh
+
+```console
 dart pub add dcat
 ```
 
@@ -66,11 +71,12 @@ if (result.isFailure) {
   }
 }
 ```
+
 [View Full Instructions](https://pub.dev/packages/dcat/install)
 
 The `cat` function supports the following parameters:
 
-Parameter        | Description                   |  Type    
+Parameter        | Description                   |  Type
 :--------------- |:----------------------------- | :-------------------
 paths            | The file paths.               | String[]
 output           | The standard output or file.  | [IOSink](https://api.dart.dev/dart-io/IOSink-class.html)

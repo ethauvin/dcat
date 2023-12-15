@@ -127,7 +127,7 @@ Future<ArgParser> setupArgsParser() async {
 // Prints an error to stderr.
 Future<void> printError(CatError error) async {
   stderr.writeln(
-      '$appName: ' + (error.hasPath ? '${error.path}: ' : '') + error.message);
+      '$appName: ${error.hasPath ? '${error.path}: ' : ''}${error.message}');
 }
 
 // Prints the version info.
